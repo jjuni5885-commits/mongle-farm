@@ -1,0 +1,16 @@
+{
+  "name": "몽글 목장 대탈출",
+  "short_name": "몽글 목장",
+  "description": "얼굴이 향한 쪽으로 톡! 귀여운 친구들을 목장 밖으로 탈출시키는 퍼즐",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#8fd46b",
+  "theme_color": "#8fd46b",
+  "lang": "ko",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

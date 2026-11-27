@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#8fd46b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="몽글 목장">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))</script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}*,*::before,*::after{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif}</style>
 <title>몽글 목장 대탈출</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -88,6 +96,8 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 .hat{border:none;border-radius:16px;background:#fff;font-family:var(--font);color:var(--ink);padding:6px 2px 8px;display:grid;justify-items:center;gap:2px;box-shadow:0 3px 0 #e8dcc4;cursor:pointer}
 .hat svg.pic{width:58px;height:46px}.hat b{font-weight:400;font-size:15px}.hat small{display:flex;align-items:center;gap:3px;font-size:13px;color:#b8701a}.hat small .coin{width:15px;height:15px}
 .hat.on{background:#fff2c2;box-shadow:0 3px 0 #f0c44a,inset 0 0 0 3px #ffd34d}.hat.lock{opacity:.55}
+.btn.inst{margin-top:10px;font-size:16px;padding:10px;background:#7fc8ff;box-shadow:0 5px 0 #4f9ad6}
+.iosTip{font-size:13px;margin:10px 0 0;opacity:.75;word-break:keep-all}
 .row{display:flex;gap:8px}.row .btn{font-size:16px;padding:11px 4px}
 .title{word-break:keep-all;font-weight:400;font-size:42px;line-height:1.02;color:#fff;text-shadow:0 4px 0 var(--pink-d),0 8px 0 rgba(90,61,50,.25);margin:0 0 4px}
 .title small{display:block;font-size:19px;color:var(--ink);text-shadow:none;margin-top:8px}
@@ -133,6 +143,8 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
       <button class="btn y" id="bSound">소리 켜짐</button>
       <button class="btn y" id="bMusic">음악 켜짐</button>
     </div>
+    <button class="btn inst" id="bInstall" hidden>홈 화면에 앱으로 설치</button>
+    <p class="iosTip" id="iosTip" hidden>아이폰: 아래 공유 버튼 → "홈 화면에 추가"를 누르면 앱처럼 쓸 수 있어요</p>
   </div>
 </div>
 <div class="ov" id="ovLevels" hidden>
@@ -1074,6 +1086,11 @@ $('bPlay').onclick=()=>{audio();SFX.ui();show(null);startLevel(save.max)};
 $('bLevels').onclick=()=>{audio();SFX.ui();buildLevels();show('ovLevels')};
 $('bLvBack').onclick=()=>{SFX.ui();show('ovTitle')};
 $('titleCoinN').textContent=save.coins||0;
+// install as an app (Android/desktop prompt, iPhone tip); hidden when already installed
+{let dp=null;const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+ addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;if(!standalone)$('bInstall').hidden=false});
+ $('bInstall').onclick=async()=>{if(!dp)return;audio();SFX.ui();dp.prompt();try{await dp.userChoice}catch(e){}dp=null;$('bInstall').hidden=true};
+ if(!standalone&&/iphone|ipad|ipod/i.test(navigator.userAgent)&&location.protocol==='https:'&&!/claude/.test(location.host))$('iosTip').hidden=false}
 const sndLabel=()=>$('bSound').textContent=save.sound?'소리 켜짐':'소리 꺼짐';sndLabel();
 $('bSound').onclick=()=>{save.sound=!save.sound;persist();sndLabel();if(!save.sound)bgmStop();audio();SFX.ui()};
 const musLabel=()=>$('bMusic').textContent=save.music?'음악 켜짐':'음악 꺼짐';musLabel();
