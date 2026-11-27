@@ -62,6 +62,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 #banner{position:fixed;left:50%;top:30%;z-index:4;pointer-events:none;display:grid;justify-items:center;gap:2px;transform:translate(-50%,-50%);animation:banIn 2.1s ease-out forwards}
 #banner b{font-weight:400;font-size:44px;color:#fff;-webkit-text-stroke:7px #c23d68;paint-order:stroke fill;letter-spacing:1px;white-space:nowrap}
 #banner small{font-size:18px;color:#fff;-webkit-text-stroke:5px #5a3d32;paint-order:stroke fill}
+#banner.chap b{-webkit-text-stroke-color:#7a5bd6;font-size:40px}
 #banner.hard b{-webkit-text-stroke-color:#d06a1e}#banner.easy b{-webkit-text-stroke-color:#3f9a4c;font-size:36px}
 @keyframes banIn{0%{transform:translate(-50%,-50%) scale(.2) rotate(-8deg);opacity:0}14%{transform:translate(-50%,-50%) scale(1.15) rotate(2deg);opacity:1}24%{transform:translate(-50%,-50%) scale(1) rotate(0)}80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-60%) scale(.9)}}
 #finger{position:fixed;left:0;top:0;z-index:4;pointer-events:none;will-change:transform}
@@ -397,7 +398,7 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();scene.background=new THREE.Color('#6cc04a');
 const camera=new THREE.PerspectiveCamera(36,1,.1,200);
-scene.add(new THREE.HemisphereLight(0xd6ecff,0x5d8a3a,.5));
+const HEMI=new THREE.HemisphereLight(0xd6ecff,0x5d8a3a,.5);scene.add(HEMI);
 const sun=new THREE.DirectionalLight(0xffe9c4,1.75);sun.position.set(-6,14,8);sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0006;sun.shadow.normalBias=.02;sun.shadow.radius=4;
 Object.assign(sun.shadow.camera,{left:-13,right:13,top:13,bottom:-13,near:1,far:45});sun.shadow.camera.updateProjectionMatrix();
@@ -647,6 +648,31 @@ const SL=new THREE.SphereGeometry(1,14,10),SXS=new THREE.SphereGeometry(1,9,7), 
 const VC=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.78});
 // living plants: same look, plus a soft breeze that bends the tops (height-weighted) and a gentle silhouette sheen
 const WIND={value:0};
+// ---------- chapter themes: every 10 levels the meadow changes season (greens are regraded in the shader) ----------
+const THEME={value:0};
+const THEMES=[
+ {name:'봄 꽃밭',bg:'#6cc04a',hemiG:0x5d8a3a,sun:0xffe9c4,hemiS:0xd6ecff},
+ {name:'단풍 숲',bg:'#e8a94c',hemiG:0x8a5a2a,sun:0xffdcae,hemiS:0xffe6cc},
+ {name:'민트 호수',bg:'#5cc9b0',hemiG:0x3a8a7a,sun:0xfff0d0,hemiS:0xd0f4ff},
+ {name:'눈송이 언덕',bg:'#cfe0f2',hemiG:0x8aa0c0,sun:0xfff4ea,hemiS:0xe8f2ff},
+ {name:'솜사탕 들판',bg:'#f0a9cf',hemiG:0xa0608a,sun:0xffe6f0,hemiS:0xf0e0ff}];
+const themeOf=L=>Math.floor((L-1)/10)%THEMES.length;
+const THEME_GLSL=`uniform float uTheme;
+vec3 thHsv(vec3 c){vec4 K=vec4(0.,-1./3.,2./3.,-1.);vec4 p=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g));vec4 q=mix(vec4(p.xyw,c.r),vec4(c.r,p.yzx),step(p.x,c.r));float d=q.x-min(q.w,q.y);return vec3(abs(q.z+(q.w-q.y)/(6.*d+1e-10)),d/(q.x+1e-10),q.x);}
+vec3 thRgb(vec3 c){vec3 p=abs(fract(c.xxx+vec3(1.,2./3.,1./3.))*6.-3.);return c.z*mix(vec3(1.),clamp(p-1.,0.,1.),c.y);}
+vec3 themeGrade(vec3 c){if(uTheme<.5)return c;vec3 h=thHsv(c);float g=smoothstep(.13,.19,h.x)*(1.-smoothstep(.45,.52,h.x))*smoothstep(.12,.3,h.y);if(g<=0.)return c;vec3 o;
+ if(uTheme<1.5)o=thRgb(vec3(.115+(h.x-.27)*.5,min(1.,h.y*1.3),min(1.,h.z*1.08)));
+ else if(uTheme<2.5)o=thRgb(vec3(.44+(h.x-.27)*.4,h.y*.85,min(1.,h.z*1.05)));
+ else if(uTheme<3.5){float l=clamp(h.z*1.12,0.,1.);o=mix(vec3(.66,.76,.92),vec3(.98,.99,1.),smoothstep(.3,.85,l));}
+ else o=thRgb(vec3(.88+(h.x-.27)*.35,h.y*.5,min(1.,h.z*1.1)));
+ return mix(c,o,g);}
+`;
+function themeMat(m){if(!m||m.userData.themed||!m.isMeshStandardMaterial)return;m.userData.themed=true;const prev=m.onBeforeCompile;
+  m.onBeforeCompile=function(sh,r){if(prev&&prev!==THREE.Material.prototype.onBeforeCompile)prev.call(this,sh,r);sh.uniforms.uTheme=THEME;
+    sh.fragmentShader=THEME_GLSL+sh.fragmentShader.replace(/}\s*$/,'gl_FragColor.rgb=themeGrade(gl_FragColor.rgb);\n}')};
+  const pk=m.customProgramCacheKey.bind(m);m.customProgramCacheKey=()=>pk()+'|th';m.needsUpdate=true}
+function applyTheme(L){const t=themeOf(L),T=THEMES[t];THEME.value=t;scene.background.set(T.bg);HEMI.groundColor.setHex(T.hemiG);HEMI.color.setHex(T.hemiS);sun.color.setHex(T.sun);
+  if(envGroup)envGroup.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(themeMat)})}
 function plantMat(amp){const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.8});
   m.onBeforeCompile=sh=>{sh.uniforms.uT=WIND;sh.vertexShader='uniform float uT;\n'+sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
     { vec4 wp=instanceMatrix*vec4(0.,0.,0.,1.); float h=max(position.y,0.); float ph=wp.x*.7+wp.z*.9;
@@ -921,7 +947,9 @@ function updateEmotes(dt){emotes=emotes.filter(e=>{e.t+=dt;const k=e.t/e.life;if
 let idleT=2,G=null,parts=[],floats=[],shake=0,time=0,combo=0,lastExit=-9,state='title',hintT=0,hintA=null,tipTimer=0,levelGroup=null;
 const cellPos=(c,r)=>new THREE.Vector3(c-(G.cols-1)/2,BH,r-(G.rows-1)/2);
 
-function showBanner(){const b=$('banner'),t=G.tier;if(G.L<4||t==='normal'){b.hidden=true;return}
+function showBanner(){const b=$('banner'),t=G.tier;
+  if(G.L>1&&(G.L-1)%10===0){b.className='chap';$('banT').textContent=`${Math.floor((G.L-1)/10)+1}장 ${THEMES[themeOf(G.L)].name}`;$('banS').textContent='새로운 풍경에 도착했어요!';b.hidden=true;void b.offsetWidth;b.hidden=false;clearTimeout(b._t);b._t=setTimeout(()=>b.hidden=true,window.__banHold||2600);setTimeout(()=>SFX.stars&&SFX.stars(3),200);return}
+  if(G.L<4||t==='normal'){b.hidden=true;return}
   b.className=t;$('banT').textContent=TIERS[t].name;$('banS').textContent=t==='easy'?'잠깐 쉬어 가요':t==='hard'?'천천히 생각해 봐요':'친구들이 잔뜩! 실수는 3번까지';
   b.hidden=true;void b.offsetWidth;b.hidden=false;clearTimeout(b._t);b._t=setTimeout(()=>b.hidden=true,window.__banHold||2200);
   if(t!=='easy')setTimeout(()=>SFX.alarm&&SFX.alarm(t),150)}
@@ -930,7 +958,7 @@ function startLevel(L){
   if(levelGroup)scene.remove(levelGroup);
   levelGroup=new THREE.Group();scene.add(levelGroup);
   G={L,cleared0:!!(save.stars&&save.stars[L]),tier:g.p.tier||'easy',idleFor:0,taps:0,guide:null,cols:g.p.cols,rows:g.p.rows,grid:g.grid,obs:g.obs,hearts:3,mist:0,done:false,animals:g.animals};
-  const env=buildEnv(G.cols,G.rows,L*31+7,g.p.mask);G.mask=g.p.mask;G.track={x:G.cols/2+.65,z:G.rows/2+.65,door:env.doorZ};
+  const env=buildEnv(G.cols,G.rows,L*31+7,g.p.mask);applyTheme(L);G.mask=g.p.mask;G.track={x:G.cols/2+.65,z:G.rows/2+.65,door:env.doorZ};
   G.animals.forEach((a,i)=>{Object.assign(a,{id:i,off:0,state:'idle',v:0,bt:0,wig:0,sq:0,blinkT:1+a.seed*3,appear:-(a.r*.6+a.c*.4)*.045-.05,poof:0});
     a.m=buildCritter(a.sp);a.m.root.position.copy(cellPos(a.c,a.r));a.m.root.rotation.y=Math.atan2(DX[a.dir],DZ[a.dir]);a.m.root.userData.animal=a;levelGroup.add(a.m.root);if(a.sleep){addNightcap(a.m,a.sp);a.zT=a.seed*2}});
   G.obs.forEach(o=>{o.m=buildObstacle(o.v);o.m.root.position.copy(cellPos(o.c,o.r));o.m.root.rotation.y=(o.r*3+o.c)%4*.5;o.m.root.userData.obs=o;levelGroup.add(o.m.root)});
@@ -1223,7 +1251,7 @@ function buildLevels(){
   const X=i=>W/2+Math.sin(i*.95)*W*.27,Y=i=>H-40-(i-.5)*gap;
   let d=`M${X(1)} ${Y(1)+60}`;for(let i=1;i<=n;i++){const x0=X(i-1),y0=Y(i-1),x1=X(i),y1=Y(i);d+=i===1?` L${x1} ${y1}`:` C${x0} ${y0-gap*.5} ${x1} ${y1+gap*.5} ${x1} ${y1}`}
   const doneD=(()=>{const m=Math.min(save.max,n);let q=`M${X(1)} ${Y(1)+60} L${X(1)} ${Y(1)}`;for(let i=2;i<=m;i++)q+=` C${X(i-1)} ${Y(i-1)-gap*.5} ${X(i)} ${Y(i)+gap*.5} ${X(i)} ${Y(i)}`;return q})();
-  const CH=['꽃밭 언덕','버섯 숲','무지개 연못','구름 목장','별빛 마을','사탕 들판','달빛 정원','솜사탕 산'];
+  const CH=THEMES.map(t=>t.name);
   const r=rng(7);let dec='';const TREE=c=>`<svg width="34" height="40" viewBox="0 0 34 40"><rect x="15" y="26" width="5" height="12" rx="2" fill="#a8714a"/><circle cx="17" cy="18" r="13" fill="${c}"/><circle cx="12" cy="13" r="5" fill="#fff" opacity=".25"/></svg>`,
     FL=c=>`<svg width="18" height="18" viewBox="0 0 18 18">${[0,1,2,3,4].map(k=>`<circle cx="${9+Math.cos(k*1.26)*4.5}" cy="${9+Math.sin(k*1.26)*4.5}" r="3.6" fill="${c}"/>`).join('')}<circle cx="9" cy="9" r="2.6" fill="#ffd34d"/></svg>`;
   for(let i=1;i<=n;i++){for(let k=0;k<3;k++){const side=(X(i)>W/2)?-1:1,x=W/2+side*(W*.28+r()*W*.14)-12,y=Y(i)-20+r()*60;const t=r();dec+=`<div class="dec" style="left:${x}px;top:${y}px">${t<.35?TREE(['#6cc04a','#8fd36a','#ffb3c9','#ffcf6b'][r()*4|0]):FL(['#fff','#ffb3c9','#c9b3ff','#ffe36b'][r()*4|0])}</div>`}}
