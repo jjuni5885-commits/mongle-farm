@@ -65,7 +65,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--pink-d)}
 .btn.y{background:var(--sun);color:var(--ink);box-shadow:0 5px 0 var(--sun-d);text-shadow:none}
 .btn.y:active{box-shadow:0 2px 0 var(--sun-d)}
-.row{display:flex;gap:10px}.row .btn{font-size:18px;padding:11px}
+.row{display:flex;gap:8px}.row .btn{font-size:16px;padding:11px 4px}
 .title{word-break:keep-all;font-weight:400;font-size:42px;line-height:1.02;color:#fff;text-shadow:0 4px 0 var(--pink-d),0 8px 0 rgba(90,61,50,.25);margin:0 0 4px}
 .title small{display:block;font-size:19px;color:var(--ink);text-shadow:none;margin-top:8px}
 .lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-height:46vh;overflow:auto;padding:4px}
@@ -103,6 +103,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <div class="row">
       <button class="btn y" id="bLevels">레벨 고르기</button>
       <button class="btn y" id="bSound">소리 켜짐</button>
+      <button class="btn y" id="bMusic">음악 켜짐</button>
     </div>
   </div>
 </div>
@@ -145,13 +146,13 @@ function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.im
 
 // ---------- save ----------
 const KEY='mongle-farm-v1';
-let save={max:1,stars:{},sound:true};
+let save={max:1,stars:{},sound:true,music:true};
 try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s)save=Object.assign(save,s)}catch(e){}
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(save))}catch(e){}};
 
 // ---------- audio ----------
 let AC=null,master=null;
-function audio(){ if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.55;master.connect(AC.destination)}catch(e){}} if(AC&&AC.state==='suspended')AC.resume(); }
+function audio(){ setTimeout(bgmStart,0); if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.55;master.connect(AC.destination)}catch(e){}} if(AC&&AC.state==='suspended')AC.resume(); }
 function tone(f0,f1,dur,type='sine',vol=.3,delay=0){ if(!AC||!save.sound)return; const t=AC.currentTime+delay;
   const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(Math.max(30,f1),t+dur);
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.0008,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.02)}
@@ -167,6 +168,23 @@ const SFX={
   fail(){[392,330,262].forEach((f,i)=>tone(f,f*.96,.3,'triangle',.2,i*.16))},
   ui(){tone(700,900,.06,'sine',.12)}
 };
+// ---------- background music: a little marimba farm tune, synthesized live ----------
+const BGM={on:false,step:0,next:0,timer:null,gain:null};
+const NT=n=>{if(!n)return 0;const m={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[n[0]]+(n[1]==='#'?1:0);const o=+n[n.length-1];return 440*Math.pow(2,(m+12*(o+1)-69)/12)};
+const MEL=('E5 G5 C6 G5 A5 G5 E5 - C5 E5 A5 E5 G5 E5 C5 - F5 A5 C6 A5 D6 C6 A5 - G5 B5 D6 B5 C6 - G5 - '+
+  'E5 G5 C6 E6 D6 C6 A5 - A5 C6 E6 C6 B5 A5 E5 - F5 A5 C6 F6 E6 D6 C6 A5 G5 B5 D6 F6 E6 - C6 -').split(' ').map(x=>x==='-'?null:x);
+const ROOT=['C3','A2','F2','G2','C3','A2','F2','G2'],FIFTH=['G3','E3','C3','D3','G3','E3','C3','D3'];
+function bgmVoice(f,t,dur,vol,type='sine',harm=0){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.008);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g);g.connect(BGM.gain);o.start(t);o.stop(t+dur+.02);
+  if(harm){const o2=AC.createOscillator(),g2=AC.createGain();o2.frequency.value=f*4;g2.gain.setValueAtTime(vol*harm,t);g2.gain.exponentialRampToValueAtTime(.0005,t+dur*.25);o2.connect(g2);g2.connect(BGM.gain);o2.start(t);o2.stop(t+dur)}}
+function bgmHat(t){const n=AC.sampleRate*.04|0,b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+  const s=AC.createBufferSource();s.buffer=b;const f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=7000;const g=AC.createGain();g.gain.value=.05;s.connect(f);f.connect(g);g.connect(BGM.gain);s.start(t)}
+function bgmStep(i,t){const bar=(i>>3)%8,b=i%8;const m=MEL[i%64];if(m)bgmVoice(NT(m),t,.42,.16,'sine',.18);
+  if(b===0)bgmVoice(NT(ROOT[bar]),t,.5,.22,'triangle');if(b===4)bgmVoice(NT(FIFTH[bar]),t,.4,.16,'triangle');if(b===6)bgmVoice(NT(ROOT[bar])*2,t,.25,.1,'triangle');
+  if(b%2===1)bgmHat(t);if(b===0&&bar%2===0)bgmVoice(NT(m||'C6')*2,t,1.1,.045,'sine')}
+function bgmStart(){if(!AC||BGM.on||!save.music||!save.sound)return;if(!BGM.gain){BGM.gain=AC.createGain();BGM.gain.gain.value=.5;BGM.gain.connect(master)}
+  BGM.on=true;BGM.next=AC.currentTime+.15;const spb=60/108/2;BGM.timer=setInterval(()=>{while(BGM.next<AC.currentTime+.4){bgmStep(BGM.step,BGM.next);BGM.next+=spb;BGM.step++}},100)}
+function bgmStop(){BGM.on=false;clearInterval(BGM.timer)}
+document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend();else AC.resume()});
 const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
 
 // ---------- three setup ----------
@@ -753,7 +771,9 @@ $('bPlay').onclick=()=>{audio();SFX.ui();show(null);startLevel(save.max)};
 $('bLevels').onclick=()=>{audio();SFX.ui();buildLevels();show('ovLevels')};
 $('bLvBack').onclick=()=>{SFX.ui();show('ovTitle')};
 const sndLabel=()=>$('bSound').textContent=save.sound?'소리 켜짐':'소리 꺼짐';sndLabel();
-$('bSound').onclick=()=>{save.sound=!save.sound;persist();sndLabel();audio();SFX.ui()};
+$('bSound').onclick=()=>{save.sound=!save.sound;persist();sndLabel();if(!save.sound)bgmStop();audio();SFX.ui()};
+const musLabel=()=>$('bMusic').textContent=save.music?'음악 켜짐':'음악 꺼짐';musLabel();
+$('bMusic').onclick=()=>{save.music=!save.music;persist();musLabel();if(!save.music)bgmStop();audio();SFX.ui()};
 $('bNext').onclick=()=>{SFX.ui();show(null);startLevel(G.L+1)};
 $('bAgain').onclick=()=>{SFX.ui();show(null);startLevel(G.L)};
 $('bRetry').onclick=()=>{SFX.ui();show(null);startLevel(G.L)};
@@ -768,7 +788,7 @@ resize();
 startLevel(Math.max(4,Math.min(save.max,8)));state='menu';$('tip').hidden=true;
 $('loading').hidden=true;
 requestAnimationFrame(loop);
-window.__game={get G(){return G},tapAnimal,startLevel,checkFree,info:()=>({calls:renderer.info.render.calls,tris:renderer.info.render.triangles,geos:renderer.info.memory.geometries})};
+window.__game={bgm:()=>({on:BGM.on,step:BGM.step,ac:AC&&AC.state}),get G(){return G},tapAnimal,startLevel,checkFree,info:()=>({calls:renderer.info.render.calls,tris:renderer.info.render.triangles,geos:renderer.info.memory.geometries})};
 })();
 </script>
 </body>
