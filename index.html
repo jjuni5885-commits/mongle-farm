@@ -116,7 +116,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 .btn.share em .coin{width:17px;height:17px}.btn.share.sm{font-size:16px;padding:10px}
 #toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:9;transform:translateX(-50%);background:rgba(90,61,50,.92);color:#fff;border-radius:999px;padding:10px 18px;font-size:16px;white-space:nowrap;pointer-events:none;transition:opacity .3s,transform .3s}
 #toast:not(.on){opacity:0;transform:translate(-50%,12px)}
-.card .btn.gift.l{right:auto;left:12px}
+.btn.gift.l{right:auto;left:12px}
 .foot{gap:10px;align-items:center}
 .boost{pointer-events:auto;position:relative;width:54px;height:54px;border-radius:50%;border:none;background:var(--cream);box-shadow:0 3px 0 rgba(90,61,50,.22);display:grid;place-items:center;padding:0;cursor:pointer}
 .boost svg{width:30px;height:38px}.boost b{position:absolute;right:-4px;bottom:-2px;min-width:22px;height:22px;border-radius:11px;background:#ff6f99;color:#fff;font-weight:400;font-size:14px;line-height:22px;padding:0 5px;border:2px solid #fff}
@@ -134,10 +134,11 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 .claim .coin{width:16px;height:16px}.claim svg:not(.coin){width:14px;height:18px}
 .claim.ok{background:#ffb84d;color:#fff;box-shadow:0 3px 0 #d98a1e;animation:dayGlow 1s ease-in-out infinite}
 .winMis{font-size:14px;margin:-6px 0 4px;display:grid;gap:3px;color:#8a6a5a}.winMis b{font-weight:400;color:#e0951a}
-.iosTip{font-size:13px;margin:18px 0 0;opacity:.75;word-break:keep-all}
+.card .iosTip{position:relative;font-size:13px;line-height:1.45;margin:22px 0 0;padding:8px 30px 8px 12px;border-radius:14px;background:#f3ead8;opacity:1;color:#7a6050;word-break:keep-all}
+.iosTip button{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:none;border-radius:50%;background:transparent;color:#a08a76;font-size:18px;font-family:var(--font);cursor:pointer}
 .row{display:flex;gap:8px}.row .btn{font-size:16px;padding:11px 4px}
-.title{word-break:keep-all;font-weight:400;font-size:42px;line-height:1.02;color:#fff;text-shadow:0 4px 0 var(--pink-d),0 8px 0 rgba(90,61,50,.25);margin:0 0 4px}
-.title small{display:block;font-size:19px;color:var(--ink);text-shadow:none;margin-top:8px}
+.title{word-break:keep-all;font-weight:400;font-size:40px;line-height:1.1;letter-spacing:.5px;color:#f0628f;text-shadow:0 3px 0 #ffd3e1,0 6px 12px rgba(90,61,50,.12);margin:8px 0 6px}
+.title small{display:block;font-size:18px;color:var(--ink);text-shadow:none;margin-top:10px;letter-spacing:0}
 .lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-height:46vh;overflow:auto;padding:4px}
 .lv{border:none;border-radius:14px;background:#fff;font-family:var(--font);font-size:18px;color:var(--ink);padding:8px 0 4px;
   box-shadow:0 3px 0 rgba(90,61,50,.18);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
@@ -145,6 +146,10 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 .lv.cur{background:var(--sun)}
 .lv.t-hard{box-shadow:inset 0 0 0 3px #ffb37a}.lv.t-super{box-shadow:inset 0 0 0 3px #ff8fab;background:#fff2f6}
 .lv:disabled{opacity:.4;cursor:default}
+.ibtn,.pill{flex:none}
+.ov{overflow-y:auto;overscroll-behavior:contain}
+@media (max-height:640px){.card{padding:16px 16px 14px}.btn{padding:11px;font-size:19px;margin-top:8px}.title{font-size:34px;margin:4px 0}.title small{font-size:16px;margin-top:6px}.row .btn{padding:9px 4px;font-size:15px}.card .iosTip{margin-top:14px;padding:6px 28px 6px 10px}}
+@media (max-width:390px){.hud{gap:6px}.hud .pill{padding:5px 10px;font-size:16px}.hearts svg{width:20px;height:20px}.ibtn{width:40px;height:40px}}
 @media (prefers-reduced-motion: reduce){*{animation:none!important}}
 </style>
 </head>
@@ -185,7 +190,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     </div>
 <button class="btn share" id="bShare"><svg viewBox="0 0 24 24" width="22" height="22"><circle cx="18" cy="5.5" r="3" fill="#fff"/><circle cx="6" cy="12" r="3" fill="#fff"/><circle cx="18" cy="18.5" r="3" fill="#fff"/><path d="M8.6 10.6l6.8-3.8M8.6 13.4l6.8 3.8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg><span>친구에게 공유</span><em class="shareBonus"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/></svg><b>+30</b></em></button>
     <button class="btn inst" id="bInstall" hidden>홈 화면에 앱으로 설치</button>
-    <p class="iosTip" id="iosTip" hidden>아이폰: 아래 공유 버튼 → "홈 화면에 추가"를 누르면 앱처럼 쓸 수 있어요</p>
+    <p class="iosTip" id="iosTip" hidden>아이폰: 사파리 공유 버튼 → "홈 화면에 추가"를 누르면 앱처럼 쓸 수 있어요<button id="iosX" aria-label="닫기">×</button></p>
   </div>
 </div>
 <div class="ov" id="ovLevels" hidden>
@@ -419,6 +424,7 @@ const SPEC={
 };
 const SP_KEYS=['bunny','chick','cow','cat','frog','bear'];
 
+const COLLAR_G=new THREE.TorusGeometry(.3,.07,10,30);
 function buildCritterTemplate(sp){
   const C=SPEC[sp];const root=new THREE.Group();const bob=new THREE.Group();root.add(bob);
   const model=new THREE.Group();model.scale.setScalar(.95);bob.add(model);
@@ -429,7 +435,12 @@ function buildCritterTemplate(sp){
   // feet
   for(const sx of[-1,1])for(const sz of[-1,1])S(model,mf,.085,sx*.18,.07,sz*.2-.03,1,.7,1.25,false,GS_LO);
   // head group
-  const head=new THREE.Group();head.position.set(0,.6,.26);model.add(head);
+  const head=new THREE.Group();head.position.set(0,.56,.35);model.add(head);
+  // collar + bell: a bright band at the neck marks which way the face points, even from behind
+  {const col=new THREE.Mesh(COLLAR_G,M(C.arrow,{roughness:.45}));col.position.set(0,.52,.19);col.rotation.x=-.25;col.scale.set(1,.92,1);col.castShadow=true;model.add(col);
+   S(model,M('#ffd34d',{roughness:.25,metalness:.35}),.065,0,.25,.27,1,1,1,true);S(model,M('#b8701a'),.02,0,.22,.32)}
+  // little round tail on the back
+  if(sp==='bear'||sp==='cow'||sp==='frog')S(model,sp==='cow'?M('#4a3b3b'):md,.075,0,.38,-.43,1,1,1,true);
   S(head,mb,.29,0,0,0,1.05,.96,1,true);
   // eyes
   const eyes=[];
@@ -492,16 +503,18 @@ CRIT_M.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#includ
     gl_FragColor.rgb += mix(vec3(1.0,.97,.92),diffuseColor.rgb,.35)*pow(fr,3.0)*.15;
     float up=normal.y*.5+.5; gl_FragColor.rgb += diffuseColor.rgb*vec3(1.0,.9,.8)*(1.0-up)*.06; }`)};
 const EYE_M=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.15});
+// readability: back half of the body is a little deeper in tone, so the bright face end reads at a glance from above
+function shadeRear(g){const p=g.attributes.position,c=g.attributes.color;for(let i=0;i<p.count;i++){const z=p.getZ(i),k=clamp((.15-z)/.6,0,1),f=1-.2*k*k*(3-2*k);c.setXYZ(i,c.getX(i)*f,c.getY(i)*f,c.getZ(i)*f)}return g}
 function critterParts(sp){if(critCache[sp])return critCache[sp];const t=buildCritterTemplate(sp);t.root.updateMatrixWorld(true);
   const inv=o=>new THREE.Matrix4().copy(o.matrixWorld).invert();const mi=inv(t.model),hi=inv(t.head),ei=inv(t.eyes[0]);const body=[],head=[],eye=[];
   t.model.traverse(o=>{if(!o.isMesh)return;let p=o.parent,which='body';while(p&&p!==t.model){if(t.eyes.includes(p)){which=p===t.eyes[0]?'eye':'skip';break}if(p===t.head){which='head';break}p=p.parent}
     if(which==='skip')return;const base=which==='body'?mi:which==='head'?hi:ei;
     (which==='body'?body:which==='head'?head:eye).push({geo:o.geometry,color:o.material.color.clone(),m:new THREE.Matrix4().multiplyMatrices(base,o.matrixWorld)})});
-  return critCache[sp]={body:merge(body),head:merge(head),eye:merge(eye).scale(1.16,1.16,1.16),headPos:t.head.position.clone(),eyePos:t.eyes.map(e=>e.position.clone())}}
+  return critCache[sp]={body:shadeRear(merge(body)),head:merge(head),eye:merge(eye).scale(1.16,1.16,1.16),headPos:t.head.position.clone(),eyePos:t.eyes.map(e=>e.position.clone())}}
 function buildCritter(sp){const P=critterParts(sp);
   const root=new THREE.Group(),bob=new THREE.Group();root.add(bob);const model=new THREE.Group();model.scale.setScalar(.95);bob.add(model);
   const body=new THREE.Mesh(P.body,CRIT_M);body.castShadow=true;model.add(body);
-  const head=new THREE.Group();head.position.copy(P.headPos);head.scale.setScalar(1.1);model.add(head);const hm=new THREE.Mesh(P.head,CRIT_M);hm.castShadow=true;head.add(hm);
+  const head=new THREE.Group();head.position.copy(P.headPos);head.scale.setScalar(1.16);model.add(head);const hm=new THREE.Mesh(P.head,CRIT_M);hm.castShadow=true;head.add(hm);
   const eyes=P.eyePos.map(q=>{const e=new THREE.Mesh(P.eye,EYE_M);e.position.copy(q);head.add(e);return e});
   const ring=new THREE.Mesh(RING_G,new THREE.MeshBasicMaterial({color:'#fff36b',transparent:true,opacity:0,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;root.add(ring);
   const blob=new THREE.Mesh(BLOB_G,BLOB_M);blob.scale.set(.95,1,1.1);blob.position.y=.02;root.add(blob);
@@ -1181,7 +1194,7 @@ $('titleCoinN').textContent=save.coins||0;
 {let dp=null;const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
  addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;if(!standalone)$('bInstall').hidden=false});
  $('bInstall').onclick=async()=>{if(!dp)return;audio();SFX.ui();dp.prompt();try{await dp.userChoice}catch(e){}dp=null;$('bInstall').hidden=true};
- if(!standalone&&/iphone|ipad|ipod/i.test(navigator.userAgent)&&location.protocol==='https:'&&!/claude/.test(location.host))$('iosTip').hidden=false}
+ if(!standalone&&/iphone|ipad|ipod/i.test(navigator.userAgent)&&location.protocol==='https:'&&!/claude/.test(location.host)&&!save.iosTipOff)$('iosTip').hidden=false;$('iosX').onclick=()=>{save.iosTipOff=true;persist();$('iosTip').hidden=true}}
 const sndLabel=()=>$('bSound').textContent=save.sound?'소리 켜짐':'소리 꺼짐';sndLabel();
 $('bSound').onclick=()=>{save.sound=!save.sound;persist();sndLabel();if(!save.sound)bgmStop();audio();SFX.ui()};
 const musLabel=()=>$('bMusic').textContent=save.music?'음악 켜짐':'음악 꺼짐';musLabel();
