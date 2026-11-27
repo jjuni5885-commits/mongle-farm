@@ -49,6 +49,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 
 .ov{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:rgba(60,120,70,.35);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));backdrop-filter:blur(2px)}
+#ovWin{align-items:end;background:linear-gradient(to bottom,rgba(0,0,0,0) 45%,rgba(50,100,60,.3));backdrop-filter:none;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 #ovTitle{align-items:end;background:linear-gradient(to bottom,rgba(0,0,0,0) 30%,rgba(50,100,60,.35));backdrop-filter:none;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 .card{background:var(--cream);border-radius:28px;padding:22px 20px 20px;width:min(340px,100%);text-align:center;
   box-shadow:0 8px 0 rgba(90,61,50,.2),0 20px 40px rgba(0,0,0,.15);animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
@@ -597,7 +598,7 @@ function startLevel(L){
   G.animals.forEach((a,i)=>{Object.assign(a,{id:i,off:0,state:'idle',v:0,bt:0,wig:0,sq:0,blinkT:1+a.seed*3,appear:-(a.r*.6+a.c*.4)*.045-.05,poof:0});
     a.m=buildCritter(a.sp);a.m.root.position.copy(cellPos(a.c,a.r));a.m.root.rotation.y=Math.atan2(DX[a.dir],DZ[a.dir]);a.m.root.userData.animal=a;levelGroup.add(a.m.root);if(a.sleep){addNightcap(a.m,a.sp);a.zT=a.seed*2}});
   G.obs.forEach(o=>{o.m=buildObstacle(o.v);o.m.root.position.copy(cellPos(o.c,o.r));o.m.root.rotation.y=(o.r*3+o.c)%4*.5;o.m.root.userData.obs=o;levelGroup.add(o.m.root)});
-  parts=[];floats=[];combo=0;hintA=null;emotes=[];capFly=[];
+  parts=[];floats=[];combo=0;hintA=null;emotes=[];capFly=[];party.on=false;party.list=[];$('left').style.opacity='';
   fitCamera();renderHUD();
   const tips={1:'얼굴이 향한 쪽이 뚫린 친구를 톡! 눌러 보세요',2:'같은 방향으로 줄 선 친구들은 줄줄이 따라 나가요',3:'부딪히면 하트가 줄어요. 차근차근!',6:'바위와 건초더미는 움직이지 않아요',8:'잠꾸러기는 바로 옆 친구가 나가면 깨어나요'};
   if(tips[L]){$('tipTx').textContent=tips[L];$('tip').hidden=false;tipTimer=L===1?99:6}else $('tip').hidden=true;
@@ -762,7 +763,7 @@ function update(dt){
   }
   capFly=capFly.filter(c=>{const u=c.userData;u.t=(u.t||0)+dt;c.position.y+=dt*(2.2-u.t*6);c.position.z-=dt*.9;c.rotation.z+=dt*7;c.scale.setScalar(Math.max(.001,1-u.t*1.6));if(u.t>.65){c.parent&&c.parent.remove(c);return false}return true});
   for(const o of G.obs){o.wig=Math.max(0,o.wig-dt*2.5);o.m.inner.rotation.z=Math.sin(time*40)*o.wig*.1}
-  for(const f of envAnim)f(time,dt);updateEmotes(dt);
+  updateParty(dt);for(const f of envAnim)f(time,dt);updateEmotes(dt);
   for(const p of parts){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.pow(.05,dt);p.vy=p.vy*Math.pow(.05,dt)+(p.t==='heart'?60:p.t==='conf'?240:0)*dt}
   parts=parts.filter(p=>p.life>0);
   for(const f of floats){f.life-=dt;f.y-=40*dt}floats=floats.filter(f=>f.life>0);
@@ -804,15 +805,42 @@ function show(id){['ovTitle','ovLevels','ovWin','ovFail'].forEach(k=>$(k).hidden
 function win(){
   const st=Math.max(1,3-G.mist),L=G.L;
   save.stars[L]=Math.max(save.stars[L]||0,st);save.max=Math.max(save.max,L+1);persist();
-  SFX.win();buzz([30,40,60]);
-  for(let i=0;i<100;i++)parts.push({x:innerWidth/2+(Math.random()-.5)*innerWidth*.3,y:innerHeight*.35,vx:(Math.random()-.5)*750,vy:-Math.random()*650-100,life:1.8+Math.random(),max:2.8,s:Math.random()*6,c:['#ff8fab','#ffd34d','#7fdcc0','#9ac8ff','#fff'][i%5],t:'conf'});
+  startParty();
+  setTimeout(()=>{SFX.win();buzz([30,40,60]);for(let i=0;i<100;i++)parts.push({x:innerWidth/2+(Math.random()-.5)*innerWidth*.3,y:innerHeight*.35,vx:(Math.random()-.5)*750,vy:-Math.random()*650-100,life:1.8+Math.random(),max:2.8,s:Math.random()*6,c:['#ff8fab','#ffd34d','#7fdcc0','#9ac8ff','#fff'][i%5],t:'conf'})},1100);
   const msgs=['완벽해요! 한 번도 안 부딪혔어요','잘했어요! 거의 완벽해요','성공! 다음엔 별 3개 도전'];
   $('winT').textContent=`레벨 ${L} 탈출 성공!`;$('winP').textContent=msgs[3-st];
   const starSvg=on=>`<svg viewBox="0 0 24 24" class="${on?'on':''}"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.2 1.3-6.6-4.9-4.6 6.6-.8z" fill="${on?'#ffd34d':'#e9dcc6'}" stroke="${on?'#e0951a':'#cbb99c'}" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
   $('winStars').innerHTML=[0,1,2].map(i=>starSvg(i<st)).join('');
   [...$('winStars').children].forEach((s,i)=>s.style.animationDelay=(.25+i*.18)+'s');
-  setTimeout(()=>show('ovWin'),350);
+  setTimeout(()=>{if(G&&G.L===L&&party.on)show('ovWin')},2000);
 }
+// ---------- win party: everyone pops back out of the mushroom house and dances ----------
+const party={on:false,k:0,list:[],home:null};
+function startParty(){
+  const door=G.track.door,seen=[...new Set(G.animals.map(a=>a.sp))];const n=7,list=[];
+  const order=[3,2,4,1,5,0,6];
+  for(let i=0;i<n;i++){const sp=seen[i%seen.length];const m=buildCritter(sp);const t=i-(n-1)/2;
+    m.root.position.set(0,0,door);m.bob.scale.setScalar(.001);levelGroup.add(m.root);
+    list.push({m,sp,x:t*.86,z:door+2.05-t*t*.06,delay:order.indexOf(i)*.16+.15,t:0,ph:i*.9,landed:false})}
+  $('left').style.opacity=0;party.on=true;party.k=0;party.list=list;party.home={b:camBase.clone(),t:camTarget.clone()};
+}
+function updateParty(dt){if(!party.on)return;
+  party.k=Math.min(1,party.k+dt/1.6);const k=easeInOut(party.k),H=party.home,door=G.track.door;
+  const tgt=new THREE.Vector3(0,.3,door+3.1);const dir=H.b.clone().sub(H.t);const d0=dir.length();dir.normalize();
+  camTarget.lerpVectors(H.t,tgt,k);camBase.copy(camTarget).addScaledVector(dir,d0+(15-d0)*k);
+  for(const p of party.list){p.t+=dt;const m=p.m;const u=clamp((p.t-p.delay)/.55,0,1);
+    if(p.t<p.delay)continue;
+    if(!p.out){p.out=true;envRef.bounce=1;SFX.poof()}
+    if(u<1){const e=easeOut(u);m.root.position.set(p.x*e,Math.sin(u*Math.PI)*1.1,door+(p.z-door)*e);m.bob.scale.setScalar(.3+.7*Math.min(1,u*2.5));m.root.rotation.y=Math.atan2(p.x,p.z-door)*(1-u)}
+    else{if(!p.landed){p.landed=true;SFX.go(order7(p));SFX.voice(p.sp);emote(Math.random()<.6?'heart':'note',m.root,1.25,1.1,.7)}
+      const b=time*Math.PI*2*1.8+p.ph;const hop=Math.abs(Math.sin(b/2))*.28;const sq=1+Math.cos(b)*.06;
+      m.root.position.set(p.x,hop,p.z);m.root.rotation.y=Math.sin(time*2.4+p.ph)*.35;m.bob.scale.set(1/Math.sqrt(sq),sq,1/Math.sqrt(sq));m.bob.rotation.z=Math.sin(b/2)*.12;
+      m.head.rotation.z=Math.sin(b/2+1)*.15;m.head.rotation.x=-.32;m.blob.position.y=.02-hop;
+      if(Math.random()<dt*.3)emote(['heart','note','heart'][Math.random()*3|0],m.root,1.3,1,.6)}
+    m.eyes.forEach((e,i)=>{e.scale.set(1.1,.3,1);e.rotation.z=(i?-1:1)*.25})}
+}
+const order7=p=>party.list.indexOf(p)+2;
+const easeInOut=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2,easeOut=t=>1-Math.pow(1-t,3);
 function buildLevels(){
   const n=Math.max(30,Math.ceil((save.max+5)/5)*5);let h='';
   for(let i=1;i<=n;i++){const s=save.stars[i]||0;h+=`<button class="lv${i===save.max?' cur':''}" data-l="${i}" ${i>save.max?'disabled':''}>${i}<small>${'★'.repeat(s)}</small></button>`}
