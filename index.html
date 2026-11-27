@@ -534,8 +534,17 @@ const grassTex=canvasTex(256,256,(g,w,h)=>{g.fillStyle='#7cc254';g.fillRect(0,0,
 let levelTex=[];
 
 // ---------- merged / instanced scenery helpers ----------
-const SL=new THREE.SphereGeometry(1,12,9),SXS=new THREE.SphereGeometry(1,7,5), CYL=new THREE.CylinderGeometry(1,1,1,12), CONE=new THREE.ConeGeometry(1,1,10), BOX=new THREE.BoxGeometry(1,1,1);
+const SL=new THREE.SphereGeometry(1,14,10),SXS=new THREE.SphereGeometry(1,9,7), CYL=new THREE.CylinderGeometry(1,1,1,12), CONE=new THREE.ConeGeometry(1,1,10), BOX=new THREE.BoxGeometry(1,1,1);
 const VC=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.78});
+// living plants: same look, plus a soft breeze that bends the tops (height-weighted) and a gentle silhouette sheen
+const WIND={value:0};
+function plantMat(amp){const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.8});
+  m.onBeforeCompile=sh=>{sh.uniforms.uT=WIND;sh.vertexShader='uniform float uT;\n'+sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+    { vec4 wp=instanceMatrix*vec4(0.,0.,0.,1.); float h=max(position.y,0.); float ph=wp.x*.7+wp.z*.9;
+      float sw=(sin(uT*1.7+ph)*.6+sin(uT*2.9+ph*1.7)*.4)*${amp.toFixed(3)}*h*h; transformed.x+=sw; transformed.z+=sw*.6; }`);
+    sh.fragmentShader=sh.fragmentShader.replace('#include <dithering_fragment>',`#include <dithering_fragment>
+    { vec3 vd=normalize(vViewPosition); float fr=1.0-clamp(dot(normal,vd),0.0,1.0); gl_FragColor.rgb+=diffuseColor.rgb*pow(fr,2.5)*.22; }`)};return m}
+const VC_TREE=plantMat(.035),VC_FLOWER=plantMat(.9);
 function part(geo,color,x,y,z,sx=1,sy=sx,sz=sx,rx=0,ry=0,rz=0){return{geo,color:new THREE.Color(color),m:new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,rz)),new THREE.Vector3(sx,sy,sz))}}
 function merge(parts){let n=0;const gs=parts.map(p=>{const g=(p.geo.index?p.geo.toNonIndexed():p.geo.clone());g.applyMatrix4(p.m);n+=g.attributes.position.count;return g});
   const pos=new Float32Array(n*3),nor=new Float32Array(n*3),col=new Float32Array(n*3);let o=0;
@@ -642,7 +651,7 @@ function buildEnv(cols,rows,seed,mask){mask=mask||[];const isVoid=(x,y)=>!!(mask
   for(let i=0;i<520&&treeL.flat().length+bushL.flat().length<115;i++){const x=(r()-.5)*(fw+16),z=(r()-.5)*(fh+16);if(blocked(x,z))continue;
     const near=Math.abs(x)<fw/2+1.6&&Math.abs(z)<fh/2+1.6;const s=.7+r()*.55;
     if(near||r()<.35)bushL[(r()*3)|0].push({x,z,s:s*.95,ry:r()*6});else{const k=r();treeL[k<.45?0:k<.65?1:k<.85?2:3].push({x,z,s,ry:r()*6})}}
-  treeL.forEach((l,i)=>E.add(instanced(PROPS.trees[i],VC,l)));bushL.forEach((l,i)=>E.add(instanced(PROPS.bushes[i],VC,l)));
+  treeL.forEach((l,i)=>E.add(instanced(PROPS.trees[i],VC_TREE,l)));bushL.forEach((l,i)=>E.add(instanced(PROPS.bushes[i],VC_TREE,l)));
   // flowers, grass tufts, mushrooms, pebbles
   const flL=PROPS.flowers.map(()=>[]),tufts=[],mush=[],stones=[];
   for(let i=0;i<70;i++){const cx=(r()-.5)*(fw+12),cz=(r()-.5)*(fh+12);if(blocked(cx,cz,-.25))continue;const k=(r()*4)|0;
@@ -653,7 +662,7 @@ function buildEnv(cols,rows,seed,mask){mask=mask||[];const isVoid=(x,y)=>!!(mask
   for(let y=0;y<rows;y++)for(let x=0;x<cols;x++)if(isVoid(x,y)){const cx=x-(cols-1)/2,cz=y-(rows-1)/2;
     for(let j=0;j<4;j++)flL[(r()*4)|0].push({x:cx+(r()-.5)*.75,y:BH,z:cz+(r()-.5)*.75,s:.8+r()*.5,ry:r()*6});
     for(let j=0;j<5;j++)tufts.push({x:cx+(r()-.5)*.8,y:BH,z:cz+(r()-.5)*.8,s:.7+r()*.6,ry:r()*6})}
-  flL.forEach((l,i)=>E.add(instanced(PROPS.flowers[i],VC,l,false)));E.add(instanced(PROPS.tuft,VC,tufts,false));E.add(instanced(PROPS.mush,VC,mush));E.add(instanced(PROPS.stone,VC,stones));
+  flL.forEach((l,i)=>E.add(instanced(PROPS.flowers[i],VC_FLOWER,l,false)));E.add(instanced(PROPS.tuft,VC_FLOWER,tufts,false));E.add(instanced(PROPS.mush,VC,mush));E.add(instanced(PROPS.stone,VC,stones));
   // pond with lily pads and a bobbing duckling
   const P=new THREE.Group();P.position.set(pond.x,0,pond.z);E.add(P);
   const rim=[];for(let i=0;i<22;i++){const a=i/22*Math.PI*2;rim.push(part(SL,i%3?'#c9c3d2':'#b3adbf',Math.cos(a)*pond.r*1.12,.05,Math.sin(a)*pond.r*.82,.2+((i*7)%3)*.04,.12,.17))}
@@ -994,7 +1003,7 @@ function update(dt){
   }
   capFly=capFly.filter(c=>{const u=c.userData;u.t=(u.t||0)+dt;c.position.y+=dt*(2.2-u.t*6);c.position.z-=dt*.9;c.rotation.z+=dt*7;c.scale.setScalar(Math.max(.001,1-u.t*1.6));if(u.t>.65){c.parent&&c.parent.remove(c);return false}return true});
   for(const o of G.obs){o.wig=Math.max(0,o.wig-dt*2.5);o.m.inner.rotation.z=Math.sin(time*40)*o.wig*.1}
-  updateParty(dt);updateGuide(dt);updateHats();for(const f of envAnim)f(time,dt);updateEmotes(dt);
+  WIND.value=time;updateParty(dt);updateGuide(dt);updateHats();for(const f of envAnim)f(time,dt);updateEmotes(dt);
   for(const p of parts){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.pow(.05,dt);p.vy=p.vy*Math.pow(.05,dt)+(p.t==='heart'?60:p.t==='conf'?240:0)*dt}
   parts=parts.filter(p=>p.life>0);
   for(const f of floats){f.life-=dt;f.y-=40*dt}floats=floats.filter(f=>f.life>0);
@@ -1009,8 +1018,13 @@ function update(dt){
 // ---------- 2D fx layer ----------
 function star2(c,x,y,s){c.beginPath();for(let i=0;i<10;i++){const r=i%2?s*.45:s,a=i/10*Math.PI*2-Math.PI/2;c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r)}c.closePath();c.fill()}
 function heart2(c,x,y,s){c.beginPath();c.moveTo(x,y+s*.9);c.bezierCurveTo(x-s*1.4,y,x-s*.7,y-s,x,y-s*.3);c.bezierCurveTo(x+s*.7,y-s,x+s*1.4,y,x,y+s*.9);c.fill()}
+// drifting pollen / light motes for a sunny, alive feeling
+const motes=Array.from({length:16},(_,i)=>({x:Math.random(),y:Math.random(),s:1.5+Math.random()*2.5,v:.008+Math.random()*.014,ph:Math.random()*7}));
 function drawFx(){
   const c=fctx;c.clearRect(0,0,innerWidth,innerHeight);
+  for(const m of motes){m.y-=m.v/60;m.x+=Math.sin(time*.6+m.ph)*.0006;if(m.y<-.05){m.y=1.05;m.x=Math.random()}
+    const a=.25+.35*Math.max(0,Math.sin(time*1.8+m.ph));const x=m.x*innerWidth,y=m.y*innerHeight;
+    const gr=c.createRadialGradient(x,y,0,x,y,m.s*3);gr.addColorStop(0,`rgba(255,252,220,${a})`);gr.addColorStop(1,'rgba(255,252,220,0)');c.fillStyle=gr;c.beginPath();c.arc(x,y,m.s*3,0,7);c.fill()}
   for(const p of parts){const k=p.life/p.max;c.globalAlpha=Math.min(1,k*1.6);c.fillStyle=p.c;
     if(p.t==='puff'){c.beginPath();c.arc(p.x,p.y,p.s*(1.5-k*.6),0,7);c.fill()}
     else if(p.t==='heart')heart2(c,p.x,p.y,p.s);
