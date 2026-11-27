@@ -84,6 +84,10 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 .coinPill{display:inline-flex;align-items:center;gap:5px;background:#fff6d6;border-radius:999px;padding:4px 12px 4px 6px;font-size:18px;color:#b8701a;margin-bottom:6px;box-shadow:inset 0 0 0 2px #ffe08a}
 .btn.c{display:flex;align-items:center;justify-content:center;gap:8px;background:#ffb84d;box-shadow:0 5px 0 #d98a1e;font-size:18px;margin-bottom:10px}
 .btn.c .coin{width:26px;height:26px}.btn.c:disabled{filter:grayscale(.8);opacity:.6}
+.shop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.hat{border:none;border-radius:16px;background:#fff;font-family:var(--font);color:var(--ink);padding:6px 2px 8px;display:grid;justify-items:center;gap:2px;box-shadow:0 3px 0 #e8dcc4;cursor:pointer}
+.hat svg.pic{width:58px;height:46px}.hat b{font-weight:400;font-size:15px}.hat small{display:flex;align-items:center;gap:3px;font-size:13px;color:#b8701a}.hat small .coin{width:15px;height:15px}
+.hat.on{background:#fff2c2;box-shadow:0 3px 0 #f0c44a,inset 0 0 0 3px #ffd34d}.hat.lock{opacity:.55}
 .row{display:flex;gap:8px}.row .btn{font-size:16px;padding:11px 4px}
 .title{word-break:keep-all;font-weight:400;font-size:42px;line-height:1.02;color:#fff;text-shadow:0 4px 0 var(--pink-d),0 8px 0 rgba(90,61,50,.25);margin:0 0 4px}
 .title small{display:block;font-size:19px;color:var(--ink);text-shadow:none;margin-top:8px}
@@ -123,6 +127,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <div class="coinPill" id="titleCoin"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><b id="titleCoinN">0</b></div>
     <h1 class="title">몽글 목장 대탈출<small>얼굴이 향한 쪽이 뚫린 친구를 톡!</small></h1>
     <button class="btn" id="bPlay">시작하기</button>
+    <button class="btn c" id="bShop"><svg class="coin hatI" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><span>모자 가게</span></button>
     <div class="row">
       <button class="btn y" id="bLevels">레벨 고르기</button>
       <button class="btn y" id="bSound">소리 켜짐</button>
@@ -135,6 +140,15 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <h2>레벨 고르기</h2>
     <div class="lvgrid" id="lvgrid"></div>
     <button class="btn y" id="bLvBack">돌아가기</button>
+  </div>
+</div>
+<div class="ov" id="ovShop" hidden>
+  <div class="card">
+    <h2>모자 가게</h2>
+    <div class="coinPill"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><b id="shopCoinN">0</b></div>
+    <p style="margin:2px 0 10px;font-size:15px">모자를 사면 모든 친구들이 같이 써요</p>
+    <div class="shop" id="shopGrid"></div>
+    <button class="btn y" id="bShopBack">돌아가기</button>
   </div>
 </div>
 <div class="ov" id="ovWin" hidden>
@@ -426,6 +440,40 @@ const CAP_G=(()=>{const g=new THREE.ConeGeometry(.21,.5,18,4,false);g.translate(
 const CAP_T=(()=>{const c=document.createElement('canvas');c.width=64;c.height=64;const g=c.getContext('2d');g.fillStyle='#6f98ff';g.fillRect(0,0,64,64);g.fillStyle='#ffffff';for(let i=0;i<3;i++)g.fillRect(0,10+i*19,64,7);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t})();
 const CAP_M=new THREE.MeshStandardMaterial({map:CAP_T,roughness:.75}),POM_M=new THREE.MeshStandardMaterial({color:'#fffaf0',roughness:.9});
 const CAP_AT={bunny:[0,.27,-.05,-.5],chick:[0,.3,0,-.35],cow:[0,.3,-.02,-.3],cat:[0,.3,-.02,-.3],frog:[0,.28,-.04,-.4],bear:[0,.31,-.02,-.3]};
+// ---------- hat shop: one InstancedMesh per level, following every head ----------
+const HATS=[
+ {id:'none',name:'맨머리',price:0,svg:'<circle cx="32" cy="30" r="14" fill="#fff" stroke="#c9b79c" stroke-width="3" stroke-dasharray="5 4"/>'},
+ {id:'sprout',name:'새싹',price:30,svg:'<path d="M32 40V22" stroke="#4fae34" stroke-width="4" stroke-linecap="round"/><ellipse cx="22" cy="20" rx="10" ry="6" fill="#7fd45a" transform="rotate(-25 22 20)"/><ellipse cx="42" cy="18" rx="10" ry="6" fill="#5cc23e" transform="rotate(25 42 18)"/>'},
+ {id:'flower',name:'꽃 화관',price:50,svg:'<ellipse cx="32" cy="30" rx="22" ry="8" fill="none" stroke="#6cc04a" stroke-width="4"/><g fill="#ff9ec4"><circle cx="12" cy="29" r="5"/><circle cx="52" cy="29" r="5"/><circle cx="32" cy="38" r="5"/></g><g fill="#fff2a8"><circle cx="21" cy="36" r="4.5"/><circle cx="43" cy="36" r="4.5"/></g><g fill="#fff"><circle cx="24" cy="23" r="4"/><circle cx="40" cy="23" r="4"/></g>'},
+ {id:'party',name:'고깔모자',price:70,svg:'<path d="M32 6L46 40H18z" fill="#ffd34d" stroke="#e0951a" stroke-width="2.5" stroke-linejoin="round"/><circle cx="32" cy="6" r="5" fill="#ff7fa8"/><g fill="#7fc8ff"><circle cx="30" cy="22" r="2.5"/><circle cx="37" cy="31" r="2.5"/><circle cx="26" cy="34" r="2.5"/></g>'},
+ {id:'bow',name:'리본',price:90,svg:'<path d="M32 26L12 14v24zM32 26l20-12v24z" fill="#ff7fa8" stroke="#d9497a" stroke-width="2.5" stroke-linejoin="round"/><circle cx="32" cy="26" r="6" fill="#ff5c8a"/>'},
+ {id:'straw',name:'밀짚모자',price:120,svg:'<ellipse cx="32" cy="34" rx="28" ry="8" fill="#f2cf6b" stroke="#c9952f" stroke-width="2.5"/><path d="M18 33c0-14 28-14 28 0z" fill="#f6d97e" stroke="#c9952f" stroke-width="2.5"/><path d="M18.5 29h27" stroke="#ff6b6b" stroke-width="4"/>'},
+ {id:'crown',name:'왕관',price:200,svg:'<path d="M12 38V16l10 10 10-14 10 14 10-10v22z" fill="#ffd34d" stroke="#d9901a" stroke-width="2.5" stroke-linejoin="round"/><circle cx="32" cy="30" r="4" fill="#ff5c8a"/><circle cx="20" cy="31" r="3" fill="#7fc8ff"/><circle cx="44" cy="31" r="3" fill="#7fe0a8"/>'},
+ {id:'frog',name:'개구리 모자',price:150,svg:'<path d="M12 36c0-16 40-16 40 0z" fill="#8fdc6a" stroke="#4f9e31" stroke-width="2.5"/><circle cx="22" cy="20" r="7" fill="#8fdc6a" stroke="#4f9e31" stroke-width="2.5"/><circle cx="42" cy="20" r="7" fill="#8fdc6a" stroke="#4f9e31" stroke-width="2.5"/><circle cx="22" cy="20" r="3" fill="#3a2a22"/><circle cx="42" cy="20" r="3" fill="#3a2a22"/>'},
+ {id:'chef',name:'요리사 모자',price:110,svg:'<rect x="20" y="26" width="24" height="12" rx="2" fill="#fff" stroke="#c9b79c" stroke-width="2.5"/><path d="M20 28c-10 0-10-16 2-14 2-8 18-8 20 0 12-2 12 14 2 14z" fill="#fff" stroke="#c9b79c" stroke-width="2.5"/>'}];
+const HAT_AT={bunny:[0,.27,-.02,-.25,.95],chick:[0,.31,.02,-.15,1],cow:[0,.31,0,-.15,1.02],cat:[0,.31,0,-.15,1],frog:[0,.27,-.02,-.2,1],bear:[0,.32,0,-.15,1.05]};
+let HATG={};
+function hatGeo(id){if(HATG[id])return HATG[id];const P=[],TOR=new THREE.TorusGeometry(1,.28,8,24),CY=new THREE.CylinderGeometry(1,1,1,20),CO=new THREE.ConeGeometry(1,1,18);
+  if(id==='sprout'){P.push(part(CY,'#4fae34',0,.07,0,.018,.14,.018),part(SL,'#7fd45a',-.06,.15,0,.07,.025,.04,0,0,.45),part(SL,'#5cc23e',.06,.16,0,.07,.025,.04,0,0,-.45))}
+  else if(id==='flower'){P.push(part(TOR,'#6cc04a',0,.02,0,.19,.19,.19,Math.PI/2,0,0));const c=['#ff9ec4','#fff2a8','#ffffff','#c9b4ff'];for(let i=0;i<8;i++){const a=i/8*Math.PI*2;P.push(part(SL,c[i%4],Math.cos(a)*.19,.05,Math.sin(a)*.19,.055,.04,.055));P.push(part(SL,'#ffc93c',Math.cos(a)*.19,.075,Math.sin(a)*.19,.022))}}
+  else if(id==='party'){P.push(part(CO,'#ffd34d',0,.15,0,.13,.3,.13,0,0,.12),part(SL,'#ff7fa8',-.035,.3,0,.05),part(TOR,'#ffffff',0,.01,0,.12,.12,.12,Math.PI/2,0,0));for(let i=0;i<5;i++){const a=i*1.3;P.push(part(SL,'#7fc8ff',Math.cos(a)*.09,.08+i*.025,Math.sin(a)*.09,.018))}}
+  else if(id==='bow'){P.push(part(SL,'#ff7fa8',-.1,.05,0,.1,.07,.045,0,0,.35),part(SL,'#ff7fa8',.1,.05,0,.1,.07,.045,0,0,-.35),part(SL,'#ff5c8a',0,.05,0,.045,.045,.045),part(SL,'#ff7fa8',-.05,-.01,.01,.03,.07,.02,0,0,.5),part(SL,'#ff7fa8',.05,-.01,.01,.03,.07,.02,0,0,-.5))}
+  else if(id==='straw'){P.push(part(CY,'#f2cf6b',0,.0,0,.3,.02,.3),part(CY,'#f6d97e',0,.07,0,.15,.13,.15),part(SL,'#f6d97e',0,.13,0,.15,.04,.15),part(CY,'#ff6b6b',0,.035,0,.155,.035,.155))}
+  else if(id==='crown'){P.push(part(CY,'#ffbe1a',0,.04,0,.16,.08,.16));for(let i=0;i<6;i++){const a=i/6*Math.PI*2;P.push(part(CO,'#ffbe1a',Math.cos(a)*.14,.12,Math.sin(a)*.14,.04,.09,.04),part(SL,'#fff3a0',Math.cos(a)*.14,.17,Math.sin(a)*.14,.02))}P.push(part(SL,'#ff5c8a',0,.045,.16,.03),part(SL,'#7fc8ff',.11,.045,.115,.022),part(SL,'#7fe0a8',-.11,.045,.115,.022))}
+  else if(id==='frog'){P.push(part(SL,'#8fdc6a',0,.0,0,.24,.13,.24),part(SL,'#8fdc6a',-.11,.12,.07,.075),part(SL,'#8fdc6a',.11,.12,.07,.075),part(SL,'#ffffff',-.11,.13,.13,.045),part(SL,'#ffffff',.11,.13,.13,.045),part(SL,'#3a2a22',-.11,.13,.165,.025),part(SL,'#3a2a22',.11,.13,.165,.025),part(SL,'#ff9ec4',-.17,.04,.16,.03,.02,.02),part(SL,'#ff9ec4',.17,.04,.16,.03,.02,.02))}
+  else if(id==='chef'){P.push(part(CY,'#ffffff',0,.06,0,.14,.12,.14));for(let i=0;i<5;i++){const a=i/5*Math.PI*2;P.push(part(SL,'#ffffff',Math.cos(a)*.08,.17,Math.sin(a)*.08,.09))}P.push(part(SL,'#ffffff',0,.2,0,.1))}
+  const g=P.length?merge(P):null;if(g&&id==='frog')g.scale(.82,.82,.82);return HATG[id]=g}
+const HAT_M=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6});
+let hatIM=null;const _hm=new THREE.Matrix4(),_hl=new THREE.Matrix4(),_hz=new THREE.Matrix4().makeScale(0,0,0);
+function setupHats(){hatIM=null;const id=save.hat||'none',g=hatGeo(id);if(!g||!G)return;hatIM=new THREE.InstancedMesh(g,HAT_M,G.animals.length+8);hatIM.castShadow=true;hatIM.frustumCulled=false;levelGroup.add(hatIM)}
+function updateHats(){if(!hatIM)return;let i=0;const put=(m,sp)=>{const q=HAT_AT[sp]||[0,.3,0,-.15,1];m.root.updateMatrixWorld(true);
+    _hl.compose(new THREE.Vector3(q[0],q[1],q[2]),new THREE.Quaternion().setFromEuler(new THREE.Euler(q[3],0,0)),new THREE.Vector3(q[4],q[4],q[4]));_hm.multiplyMatrices(m.head.matrixWorld,_hl);hatIM.setMatrixAt(i++,_hm)};
+  for(const a of G.animals){if(a.state==='gone'||a.sleep)hatIM.setMatrixAt(i++,_hz);else put(a.m,a.sp)}
+  for(const p of party.list)if(p.t>p.delay)put(p.m,p.sp);
+  hatIM.count=i;hatIM.instanceMatrix.needsUpdate=true}
+function buildShop(){$('shopCoinN').textContent=save.coins||0;const own=save.owned||['none'];
+  $('shopGrid').innerHTML=HATS.map(h=>{const has=own.includes(h.id),on=(save.hat||'none')===h.id;
+    return `<button class="hat${on?' on':''}${!has&&(save.coins||0)<h.price?' lock':''}" data-h="${h.id}"><svg class="pic" viewBox="0 0 64 48">${h.svg}</svg><b>${h.name}</b><small>${on?'쓰는 중':has?'쓰기':'<svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg>'+h.price}</small></button>`}).join('')}
 function addNightcap(m,sp){const g=new THREE.Group();const cone=new THREE.Mesh(CAP_G,CAP_M);cone.castShadow=true;cone.rotation.z=1.05;g.add(cone);
   const brim=new THREE.Mesh(new THREE.TorusGeometry(.19,.05,8,20),POM_M);brim.rotation.x=Math.PI/2;g.add(brim);
   const pom=new THREE.Mesh(GS,POM_M);pom.scale.setScalar(.085);pom.position.set(-Math.sin(1.05)*.5,Math.cos(1.05)*.5,0);g.add(pom);
@@ -759,7 +807,7 @@ function startLevel(L){
   parts=[];floats=[];combo=0;hintA=null;emotes=[];capFly=[];party.on=false;party.list=[];$('left').style.opacity='';
   fitCamera();renderHUD();
   const tips={1:'손가락이 가리키는 친구를 톡! 얼굴 쪽으로 나가요',2:'같은 방향으로 줄 선 친구들은 줄줄이 따라 나가요',3:'부딪히면 하트가 줄어요. 차근차근!',6:'바위와 건초더미는 움직이지 않아요',8:'잠꾸러기는 바로 옆 친구가 나가면 깨어나요'};
-  showBanner();bgmSong(G.tier==='easy'?'nap':G.tier==='normal'?'stroll':'chase');if(G.L<4||G.tier==='normal')SFX.start();
+  setupHats();showBanner();bgmSong(G.tier==='easy'?'nap':G.tier==='normal'?'stroll':'chase');if(G.L<4||G.tier==='normal')SFX.start();
   if(tips[L]){$('tipTx').textContent=tips[L];$('tip').hidden=false;tipTimer=L===1?99:6}else $('tip').hidden=true;
   state='play';
 }
@@ -934,7 +982,7 @@ function update(dt){
   }
   capFly=capFly.filter(c=>{const u=c.userData;u.t=(u.t||0)+dt;c.position.y+=dt*(2.2-u.t*6);c.position.z-=dt*.9;c.rotation.z+=dt*7;c.scale.setScalar(Math.max(.001,1-u.t*1.6));if(u.t>.65){c.parent&&c.parent.remove(c);return false}return true});
   for(const o of G.obs){o.wig=Math.max(0,o.wig-dt*2.5);o.m.inner.rotation.z=Math.sin(time*40)*o.wig*.1}
-  updateParty(dt);updateGuide(dt);for(const f of envAnim)f(time,dt);updateEmotes(dt);
+  updateParty(dt);updateGuide(dt);updateHats();for(const f of envAnim)f(time,dt);updateEmotes(dt);
   for(const p of parts){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.pow(.05,dt);p.vy=p.vy*Math.pow(.05,dt)+(p.t==='heart'?60:p.t==='conf'?240:0)*dt}
   parts=parts.filter(p=>p.life>0);
   for(const f of floats){f.life-=dt;f.y-=40*dt}floats=floats.filter(f=>f.life>0);
@@ -972,7 +1020,7 @@ let last=performance.now();
 function loop(now){const rdt=(now-last)/1000,dt=Math.min(.05,rdt);last=now;tuneQuality(Math.min(rdt,.2));update(dt);renderer.render(scene,camera);drawFx();requestAnimationFrame(loop)}
 
 // ---------- flow ----------
-function show(id){if(id==='ovTitle'){bgmSong('nap');$('titleCoinN').textContent=save.coins||0}['ovTitle','ovLevels','ovWin','ovFail'].forEach(k=>$(k).hidden=k!==id);state=id?'menu':'play'}
+function show(id){if(id==='ovShop'){['ovTitle','ovLevels','ovWin','ovFail'].forEach(k=>$(k).hidden=true);$('ovShop').hidden=false;state='menu';return}$('ovShop').hidden=true;if(id==='ovTitle'){bgmSong('nap');$('titleCoinN').textContent=save.coins||0}['ovTitle','ovLevels','ovWin','ovFail'].forEach(k=>$(k).hidden=k!==id);state=id?'menu':'play'}
 function countUp(el,n){const t0=performance.now();const f=()=>{const k=Math.min(1,(performance.now()-t0)/700);el.textContent='+'+Math.round(n*k);if(k<1)requestAnimationFrame(f);else{SFX.coin&&SFX.coin()}};f();let i=0;const iv=setInterval(()=>{if(++i>6)clearInterval(iv);else SFX.tick&&SFX.tick(i)},100)}
 function win(){
   const st=Math.max(1,3-G.mist),L=G.L;
@@ -1032,6 +1080,11 @@ const musLabel=()=>$('bMusic').textContent=save.music?'음악 켜짐':'음악 �
 $('bMusic').onclick=()=>{save.music=!save.music;persist();musLabel();if(!save.music)bgmStop();audio();SFX.ui()};
 $('bNext').onclick=()=>{SFX.ui();show(null);startLevel(G.L+1)};
 $('bAgain').onclick=()=>{SFX.ui();show(null);startLevel(G.L)};
+$('bShop').onclick=()=>{audio();SFX.ui();buildShop();show('ovShop')};
+$('bShopBack').onclick=()=>{SFX.ui();show('ovTitle')};
+$('shopGrid').addEventListener('click',e=>{const b=e.target.closest('.hat');if(!b)return;const h=HATS.find(x=>x.id===b.dataset.h);save.owned=save.owned||['none'];
+  if(save.owned.includes(h.id)){save.hat=h.id;SFX.ui()}else if((save.coins||0)>=h.price){save.coins-=h.price;save.owned.push(h.id);save.hat=h.id;SFX.coin();SFX.win()}else{SFX.boing();b.animate([{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'none'}],{duration:250});return}
+  persist();buildShop();$('titleCoinN').textContent=save.coins||0});
 $('bCont').onclick=()=>{if((save.coins||0)<30||!G)return;save.coins-=30;persist();SFX.coin();show(null);G.hearts=1;G.done=false;renderHUD();
   const hs=$('hearts').children[0];if(hs)hs.animate([{transform:'scale(.2)'},{transform:'scale(1.5)'},{transform:'scale(1)'}],{duration:500,easing:'ease-out'});bgmDuck(.5,.1)};
 $('bRetry').onclick=()=>{SFX.ui();show(null);startLevel(G.L)};
