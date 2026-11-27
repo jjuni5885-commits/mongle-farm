@@ -50,6 +50,11 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 .ov{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:rgba(60,120,70,.35);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));backdrop-filter:blur(2px)}
 #ovWin{align-items:end;background:linear-gradient(to bottom,rgba(0,0,0,0) 45%,rgba(50,100,60,.3));backdrop-filter:none;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+#finger{position:fixed;left:0;top:0;z-index:4;pointer-events:none;will-change:transform}
+#finger svg{display:block;transform-origin:18px 4px;filter:drop-shadow(0 3px 2px rgba(60,40,30,.3));animation:fpress 1.1s ease-in-out infinite}
+#finger .rip{position:absolute;left:-16px;top:-16px;width:32px;height:32px;border-radius:50%;border:4px solid #fff;opacity:0;animation:frip 1.1s ease-out infinite}
+@keyframes fpress{0%,100%{transform:translate(6px,14px) scale(1)}45%{transform:translate(0,0) scale(.92)}55%{transform:translate(0,0) scale(.92)}}
+@keyframes frip{0%,40%{transform:scale(.3);opacity:0}50%{opacity:.95}100%{transform:scale(1.6);opacity:0}}
 #ovTitle{align-items:end;background:linear-gradient(to bottom,rgba(0,0,0,0) 30%,rgba(50,100,60,.35));backdrop-filter:none;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 .card{background:var(--cream);border-radius:28px;padding:22px 20px 20px;width:min(340px,100%);text-align:center;
   box-shadow:0 8px 0 rgba(90,61,50,.2),0 20px 40px rgba(0,0,0,.15);animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
@@ -92,6 +97,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <button class="ibtn" id="bRe" aria-label="다시 하기"><svg viewBox="0 0 24 24" fill="none" stroke="#5a3d32" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg></button>
     <button class="ibtn" id="bMenu" aria-label="메뉴"><svg viewBox="0 0 24 24" fill="none" stroke="#5a3d32" stroke-width="2.4" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
   </div>
+  <div id="finger" hidden><div class="rip"></div><svg viewBox="0 0 64 80" width="58" height="72"><path d="M22 6c-4 0-7 3-7 7v34l-5-6c-3-3-8-3-10 0-2 2-2 6 0 8l15 19c3 4 8 7 14 7h11c9 0 15-7 15-16V35c0-4-3-6-6-6s-5 2-5 5v-3c0-4-3-6-6-6s-5 2-5 5v-2c0-4-3-6-6-6-2 0-4 1-5 3V13c0-4-3-7-7-7z" fill="#fff" stroke="#5a3d32" stroke-width="3.5" stroke-linejoin="round"/><path d="M17 15c0-3 2-5 4-5" stroke="#ffd0dc" stroke-width="3" stroke-linecap="round" fill="none"/></svg></div>
   <div class="tip" id="tip" hidden><span id="tipTx"></span></div>
   <div class="foot"><div class="pill" id="left">남은 친구 0</div></div>
 </div>
@@ -593,14 +599,14 @@ function startLevel(L){
   const g=genLevel(L);
   if(levelGroup)scene.remove(levelGroup);
   levelGroup=new THREE.Group();scene.add(levelGroup);
-  G={L,cols:g.p.cols,rows:g.p.rows,grid:g.grid,obs:g.obs,hearts:3,mist:0,done:false,animals:g.animals};
+  G={L,idleFor:0,taps:0,guide:null,cols:g.p.cols,rows:g.p.rows,grid:g.grid,obs:g.obs,hearts:3,mist:0,done:false,animals:g.animals};
   const env=buildEnv(G.cols,G.rows,L*31+7);G.track={x:G.cols/2+.65,z:G.rows/2+.65,door:env.doorZ};
   G.animals.forEach((a,i)=>{Object.assign(a,{id:i,off:0,state:'idle',v:0,bt:0,wig:0,sq:0,blinkT:1+a.seed*3,appear:-(a.r*.6+a.c*.4)*.045-.05,poof:0});
     a.m=buildCritter(a.sp);a.m.root.position.copy(cellPos(a.c,a.r));a.m.root.rotation.y=Math.atan2(DX[a.dir],DZ[a.dir]);a.m.root.userData.animal=a;levelGroup.add(a.m.root);if(a.sleep){addNightcap(a.m,a.sp);a.zT=a.seed*2}});
   G.obs.forEach(o=>{o.m=buildObstacle(o.v);o.m.root.position.copy(cellPos(o.c,o.r));o.m.root.rotation.y=(o.r*3+o.c)%4*.5;o.m.root.userData.obs=o;levelGroup.add(o.m.root)});
   parts=[];floats=[];combo=0;hintA=null;emotes=[];capFly=[];party.on=false;party.list=[];$('left').style.opacity='';
   fitCamera();renderHUD();
-  const tips={1:'얼굴이 향한 쪽이 뚫린 친구를 톡! 눌러 보세요',2:'같은 방향으로 줄 선 친구들은 줄줄이 따라 나가요',3:'부딪히면 하트가 줄어요. 차근차근!',6:'바위와 건초더미는 움직이지 않아요',8:'잠꾸러기는 바로 옆 친구가 나가면 깨어나요'};
+  const tips={1:'손가락이 가리키는 친구를 톡! 얼굴 쪽으로 나가요',2:'같은 방향으로 줄 선 친구들은 줄줄이 따라 나가요',3:'부딪히면 하트가 줄어요. 차근차근!',6:'바위와 건초더미는 움직이지 않아요',8:'잠꾸러기는 바로 옆 친구가 나가면 깨어나요'};
   if(tips[L]){$('tipTx').textContent=tips[L];$('tip').hidden=false;tipTimer=L===1?99:6}else $('tip').hidden=true;
   state='play';
 }
@@ -667,8 +673,19 @@ function startExit(a,delay){G.grid[a.r][a.c]=null;a.state='exit';a.v=2.5;a.sq=1;
 function wake(o,delay=0){o.sleep=false;setTimeout(()=>{o.face='joy';o.faceT=.8;o.hopT=.5;o.sq=1;emote('!',o.m.root,1.35,.9,.7);SFX.wake();
   if(o.m.cap){const c=o.m.cap;c.userData.fly=1;capFly.push(c)}},delay*1000+180)}
 let capFly=[];
+// guide finger: always on level 1, first move of level 2, and after a long pause on early levels
+function pickGuide(){let best=null,bl=0;
+  for(const a of G.animals){if(a.state!=='idle'||a.sleep)continue;const ch=chainOf(a);if(!checkFree(ch.front).free)continue;
+    const back=ch.mem[ch.mem.length-1];if(back!==a)continue;const l=ch.mem.length+(G.L===2?0:Math.random()*.1);if(!best||l>bl){best=a;bl=l}}
+  return best}
+function updateGuide(dt){const el=$('finger');if(!G||state!=='play'||G.done){el.hidden=true;return}
+  G.idleFor+=dt;const want=G.L===1||(G.L===2&&!G.taps)||(G.L<=5&&G.idleFor>7);
+  if(!want){el.hidden=true;G.guide=null;return}
+  const g=G.guide;if(!g||g.state!=='idle'||!checkFree(chainOf(g).front).free)G.guide=pickGuide();
+  if(!G.guide){el.hidden=true;return}
+  const[x,y]=toScreen(animalWorld(G.guide,.45));el.hidden=false;el.style.transform=`translate(${x|0}px,${y|0}px)`}
 function tapAnimal(a){
-  if(a.state!=='idle')return;audio();
+  if(a.state!=='idle')return;audio();G.idleFor=0;G.taps=(G.taps||0)+1;G.guide=null;
   if(a.sleep){a.wig=.8;SFX.snore();emote('z',a.m.root,1.3,1,.62);const[zx,zy]=toScreen(animalWorld(a,.9));floats.push({x:clamp(zx,90,innerWidth-90),y:zy-20,txt:'쿨쿨…',life:.8,max:.8});return}
   if(G.L===1&&tipTimer>50)tipTimer=2.5;
   const ch=chainOf(a);const f=checkFree(ch.front);const[sx,sy]=toScreen(animalWorld(a,.6));
@@ -690,6 +707,7 @@ function onHit(a){
   if(a.blk.kind==='animal'){a.blk.face='ouch';a.blk.faceT=.7;emote(Math.random()<.5?'!':'?',a.blk.m.root,1.3,.9,.78)}
   const[hx,hy]=toScreen(animalWorld(a,.7).add(new THREE.Vector3(DX[a.dir]*.35,0,DZ[a.dir]*.35)));
   for(let i=0;i<9;i++){const an=i/9*Math.PI*2;parts.push({x:hx,y:hy,vx:Math.cos(an)*170,vy:Math.sin(an)*170,life:.4,max:.4,s:5,c:'#fff36b',t:'star'})}
+  if(G.L===1){floats.push({x:hx,y:hy-20,txt:'괜찮아요! 연습이에요',life:1.1,max:1.1});return}
   G.hearts--;G.mist++;renderHUD();
   const hs=$('hearts').children[G.hearts];if(hs)hs.animate([{transform:'scale(1.6)'},{transform:'scale(.8)'}],{duration:350,easing:'ease-out'});
   floats.push({x:hx,y:hy-20,txt:'콩!',life:.75,max:.75,red:true});
@@ -763,7 +781,7 @@ function update(dt){
   }
   capFly=capFly.filter(c=>{const u=c.userData;u.t=(u.t||0)+dt;c.position.y+=dt*(2.2-u.t*6);c.position.z-=dt*.9;c.rotation.z+=dt*7;c.scale.setScalar(Math.max(.001,1-u.t*1.6));if(u.t>.65){c.parent&&c.parent.remove(c);return false}return true});
   for(const o of G.obs){o.wig=Math.max(0,o.wig-dt*2.5);o.m.inner.rotation.z=Math.sin(time*40)*o.wig*.1}
-  updateParty(dt);for(const f of envAnim)f(time,dt);updateEmotes(dt);
+  updateParty(dt);updateGuide(dt);for(const f of envAnim)f(time,dt);updateEmotes(dt);
   for(const p of parts){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.pow(.05,dt);p.vy=p.vy*Math.pow(.05,dt)+(p.t==='heart'?60:p.t==='conf'?240:0)*dt}
   parts=parts.filter(p=>p.life>0);
   for(const f of floats){f.life-=dt;f.y-=40*dt}floats=floats.filter(f=>f.life>0);
