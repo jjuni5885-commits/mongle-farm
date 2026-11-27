@@ -77,6 +77,13 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--pink-d)}
 .btn.y{background:var(--sun);color:var(--ink);box-shadow:0 5px 0 var(--sun-d);text-shadow:none}
 .btn.y:active{box-shadow:0 2px 0 var(--sun-d)}
+.coin{width:22px;height:22px;flex:none}
+.coinGain{display:flex;align-items:center;justify-content:center;gap:6px;margin:-4px 0 12px;font-size:22px;color:#b8701a}
+.coinGain .coin{width:28px;height:28px;animation:coinSpin 1.2s ease-in-out infinite}.coinGain small{font-size:14px;color:var(--ink);opacity:.7}
+@keyframes coinSpin{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.25)}}
+.coinPill{display:inline-flex;align-items:center;gap:5px;background:#fff6d6;border-radius:999px;padding:4px 12px 4px 6px;font-size:18px;color:#b8701a;margin-bottom:6px;box-shadow:inset 0 0 0 2px #ffe08a}
+.btn.c{display:flex;align-items:center;justify-content:center;gap:8px;background:#ffb84d;box-shadow:0 5px 0 #d98a1e;font-size:18px;margin-bottom:10px}
+.btn.c .coin{width:26px;height:26px}.btn.c:disabled{filter:grayscale(.8);opacity:.6}
 .row{display:flex;gap:8px}.row .btn{font-size:16px;padding:11px 4px}
 .title{word-break:keep-all;font-weight:400;font-size:42px;line-height:1.02;color:#fff;text-shadow:0 4px 0 var(--pink-d),0 8px 0 rgba(90,61,50,.25);margin:0 0 4px}
 .title small{display:block;font-size:19px;color:var(--ink);text-shadow:none;margin-top:8px}
@@ -113,6 +120,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 
 <div class="ov" id="ovTitle">
   <div class="card">
+    <div class="coinPill" id="titleCoin"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><b id="titleCoinN">0</b></div>
     <h1 class="title">몽글 목장 대탈출<small>얼굴이 향한 쪽이 뚫린 친구를 톡!</small></h1>
     <button class="btn" id="bPlay">시작하기</button>
     <div class="row">
@@ -134,6 +142,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <h2 id="winT">목장 탈출 성공!</h2>
     <div class="stars" id="winStars"></div>
     <p id="winP">친구들이 모두 풀밭으로 나갔어요</p>
+    <div class="coinGain" id="winCoin"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><b id="winCoinN">+0</b><small id="winCoinT"></small></div>
     <button class="btn" id="bNext">다음 레벨</button>
     <button class="btn y" id="bAgain">다시 하기</button>
   </div>
@@ -142,6 +151,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
   <div class="card">
     <h2>앗, 하트가 없어요</h2>
     <p>친구들이 너무 많이 부딪혔어요.<br>순서를 잘 보고 다시 해 볼까요?</p>
+    <button class="btn c" id="bCont"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><span>30개로 하트 받고 이어하기</span></button>
     <button class="btn" id="bRetry">다시 도전</button>
     <button class="btn y" id="bFailMenu">메뉴로</button>
   </div>
@@ -161,7 +171,7 @@ function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.im
 
 // ---------- save ----------
 const KEY='mongle-farm-v1';
-let save={max:1,stars:{},sound:true,music:true};
+let save={max:1,stars:{},sound:true,music:true,coins:0};
 try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s)save=Object.assign(save,s)}catch(e){}
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(save))}catch(e){}};
 
@@ -216,6 +226,8 @@ const SFX={
   fail:SND(()=>{[392,349.2,311.1,261.6].forEach((f,i)=>vox(f,f*.97,i===3?.7:.28,{type:'triangle',vol:.16,delay:i*.2,vib:i===3?.02:0,vibF:5,wet:.3}))}),
   snore:SND(()=>{noise(.5,500,.06,0,{type:'lowpass',sweep:.6,att:.25,wet:.1});vox(140,120,.5,{vol:.05,att:.2,wet:0})}),
   wake:SND(()=>{vox(500,1100,.16,{type:'triangle',vol:.14,wet:.2});bell(1760,.07,.1,.4);vox(900,1500,.09,{vol:.06,delay:.2})}),
+  coin:SND(()=>{bell(1975.5,.1,0,.5);bell(2637,.1,.08,.7)}),
+  tick:SND(i=>{vox(1400+i*120,1400+i*120,.05,{type:'square',vol:.025,lp:3000,wet:.1})}),
   hint:SND(()=>{[0,2,4].forEach(i=>bell(pn(i+5),.06,i*.07,.5))}),
   start:SND(()=>{noise(.35,500,.06,0,{sweep:4,wet:.1});[0,1,2].forEach(i=>vox(pn(i*2+5),pn(i*2+5),.25,{type:'triangle',vol:.08,delay:.08+i*.07,wet:.3}))}),
   // hard / super-hard banner: little drum hits, a roll for super
@@ -739,7 +751,7 @@ function startLevel(L){
   const g=genLevel(L);
   if(levelGroup)scene.remove(levelGroup);
   levelGroup=new THREE.Group();scene.add(levelGroup);
-  G={L,tier:g.p.tier||'easy',idleFor:0,taps:0,guide:null,cols:g.p.cols,rows:g.p.rows,grid:g.grid,obs:g.obs,hearts:3,mist:0,done:false,animals:g.animals};
+  G={L,cleared0:!!(save.stars&&save.stars[L]),tier:g.p.tier||'easy',idleFor:0,taps:0,guide:null,cols:g.p.cols,rows:g.p.rows,grid:g.grid,obs:g.obs,hearts:3,mist:0,done:false,animals:g.animals};
   const env=buildEnv(G.cols,G.rows,L*31+7,g.p.mask);G.mask=g.p.mask;G.track={x:G.cols/2+.65,z:G.rows/2+.65,door:env.doorZ};
   G.animals.forEach((a,i)=>{Object.assign(a,{id:i,off:0,state:'idle',v:0,bt:0,wig:0,sq:0,blinkT:1+a.seed*3,appear:-(a.r*.6+a.c*.4)*.045-.05,poof:0});
     a.m=buildCritter(a.sp);a.m.root.position.copy(cellPos(a.c,a.r));a.m.root.rotation.y=Math.atan2(DX[a.dir],DZ[a.dir]);a.m.root.userData.animal=a;levelGroup.add(a.m.root);if(a.sleep){addNightcap(a.m,a.sp);a.zT=a.seed*2}});
@@ -852,7 +864,7 @@ function onHit(a){
   G.hearts--;G.mist++;renderHUD();
   const hs=$('hearts').children[G.hearts];if(hs)hs.animate([{transform:'scale(1.6)'},{transform:'scale(.8)'}],{duration:350,easing:'ease-out'});
   floats.push({x:hx,y:hy-20,txt:'콩!',life:.75,max:.75,red:true});
-  if(G.hearts<=0){G.done=true;setTimeout(()=>{SFX.fail();bgmDuck(.1,3.5);show('ovFail')},900)}
+  if(G.hearts<=0){G.done=true;setTimeout(()=>{SFX.fail();bgmDuck(.1,3.5);$('bCont').disabled=(save.coins||0)<30;$('bCont').querySelector('span').textContent=(save.coins||0)<30?`코인이 모자라요 (${save.coins||0}/30)`:'30개로 하트 받고 이어하기';show('ovFail')},900)}
 }
 
 // picking
@@ -960,11 +972,15 @@ let last=performance.now();
 function loop(now){const rdt=(now-last)/1000,dt=Math.min(.05,rdt);last=now;tuneQuality(Math.min(rdt,.2));update(dt);renderer.render(scene,camera);drawFx();requestAnimationFrame(loop)}
 
 // ---------- flow ----------
-function show(id){if(id==='ovTitle')bgmSong('nap');['ovTitle','ovLevels','ovWin','ovFail'].forEach(k=>$(k).hidden=k!==id);state=id?'menu':'play'}
+function show(id){if(id==='ovTitle'){bgmSong('nap');$('titleCoinN').textContent=save.coins||0}['ovTitle','ovLevels','ovWin','ovFail'].forEach(k=>$(k).hidden=k!==id);state=id?'menu':'play'}
+function countUp(el,n){const t0=performance.now();const f=()=>{const k=Math.min(1,(performance.now()-t0)/700);el.textContent='+'+Math.round(n*k);if(k<1)requestAnimationFrame(f);else{SFX.coin&&SFX.coin()}};f();let i=0;const iv=setInterval(()=>{if(++i>6)clearInterval(iv);else SFX.tick&&SFX.tick(i)},100)}
 function win(){
   const st=Math.max(1,3-G.mist),L=G.L;
   save.stars[L]=Math.max(save.stars[L]||0,st);save.max=Math.max(save.max,L+1);persist();
   startParty();bgmDuck(.12,4.5);setTimeout(()=>SFX.stars(st),2000);
+  // coins: base + stars + tier bonus, first clear pays double
+  const first=!G.cleared0,gain=(5+st*5+({hard:10,super:20}[G.tier]||0))*(first?2:1);save.coins=(save.coins||0)+gain;persist();
+  $('winCoinN').textContent='+0';$('winCoinT').textContent=first?'첫 클리어 2배!':'';setTimeout(()=>countUp($('winCoinN'),gain),2300);
   setTimeout(()=>{SFX.win();buzz([30,40,60]);for(let i=0;i<100;i++)parts.push({x:innerWidth/2+(Math.random()-.5)*innerWidth*.3,y:innerHeight*.35,vx:(Math.random()-.5)*750,vy:-Math.random()*650-100,life:1.8+Math.random(),max:2.8,s:Math.random()*6,c:['#ff8fab','#ffd34d','#7fdcc0','#9ac8ff','#fff'][i%5],t:'conf'})},1100);
   const msgs=['완벽해요! 한 번도 안 부딪혔어요','잘했어요! 거의 완벽해요','성공! 다음엔 별 3개 도전'];
   $('winT').textContent=`레벨 ${L} 탈출 성공!`;$('winP').textContent=msgs[3-st];
@@ -1009,12 +1025,15 @@ $('lvgrid').addEventListener('click',e=>{const b=e.target.closest('.lv');if(!b||
 $('bPlay').onclick=()=>{audio();SFX.ui();show(null);startLevel(save.max)};
 $('bLevels').onclick=()=>{audio();SFX.ui();buildLevels();show('ovLevels')};
 $('bLvBack').onclick=()=>{SFX.ui();show('ovTitle')};
+$('titleCoinN').textContent=save.coins||0;
 const sndLabel=()=>$('bSound').textContent=save.sound?'소리 켜짐':'소리 꺼짐';sndLabel();
 $('bSound').onclick=()=>{save.sound=!save.sound;persist();sndLabel();if(!save.sound)bgmStop();audio();SFX.ui()};
 const musLabel=()=>$('bMusic').textContent=save.music?'음악 켜짐':'음악 꺼짐';musLabel();
 $('bMusic').onclick=()=>{save.music=!save.music;persist();musLabel();if(!save.music)bgmStop();audio();SFX.ui()};
 $('bNext').onclick=()=>{SFX.ui();show(null);startLevel(G.L+1)};
 $('bAgain').onclick=()=>{SFX.ui();show(null);startLevel(G.L)};
+$('bCont').onclick=()=>{if((save.coins||0)<30||!G)return;save.coins-=30;persist();SFX.coin();show(null);G.hearts=1;G.done=false;renderHUD();
+  const hs=$('hearts').children[0];if(hs)hs.animate([{transform:'scale(.2)'},{transform:'scale(1.5)'},{transform:'scale(1)'}],{duration:500,easing:'ease-out'});bgmDuck(.5,.1)};
 $('bRetry').onclick=()=>{SFX.ui();show(null);startLevel(G.L)};
 $('bFailMenu').onclick=()=>{SFX.ui();show('ovTitle')};
 $('bRe').onclick=()=>{if(state!=='play')return;audio();SFX.ui();startLevel(G.L)};
