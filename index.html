@@ -223,7 +223,7 @@ const BLACK=M('#2a1d1a',{roughness:.18}), WHITE=M('#ffffff',{roughness:.3,emissi
 const fmCache={};
 function FM(color){if(!fmCache[color])fmCache[color]=new THREE.MeshPhysicalMaterial({color,roughness:.9,sheen:.6,sheenRoughness:.8,sheenColor:new THREE.Color('#ffffff')});return fmCache[color]}
 let _fluff=null;
-function fluffGeo(){if(_fluff)return _fluff;const g=new THREE.SphereGeometry(1,12,8);const ps=[{geo:g,color:new THREE.Color(1,1,1),m:new THREE.Matrix4().compose(new THREE.Vector3(0,.36,-.04),new THREE.Quaternion(),new THREE.Vector3(.367,.31,.396))}];
+function fluffGeo(){if(_fluff)return _fluff;const g=new THREE.SphereGeometry(1,15,10);const ps=[{geo:g,color:new THREE.Color(1,1,1),m:new THREE.Matrix4().compose(new THREE.Vector3(0,.36,-.04),new THREE.Quaternion(),new THREE.Vector3(.367,.31,.396))}];
   const add=(x,y,z,r)=>ps.push({geo:g,color:new THREE.Color(1,1,1),m:new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion(),new THREE.Vector3(r,r*.9,r))});
   for(let i=0;i<9;i++){const a=i/9*Math.PI*2;add(Math.cos(a)*.27,.35+(i%2)*.025,Math.sin(a)*.31-.04,.165)}
   for(let i=0;i<5;i++){const a=i/5*Math.PI*2+.3;add(Math.cos(a)*.14,.52,Math.sin(a)*.17-.07,.16)}
@@ -320,17 +320,22 @@ function buildCritterTemplate(sp){
 // Bake each species once into a few merged meshes (body, head, eye) so a full board stays light on phones.
 const critCache={};
 const CRIT_M=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.72});
+// plush look: soft light sheen on silhouettes + warm bounce in the shadow side, like velvet toys
+CRIT_M.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <dithering_fragment>',`#include <dithering_fragment>
+  { vec3 vd=normalize(vViewPosition); float fr=1.0-clamp(dot(normal,vd),0.0,1.0);
+    gl_FragColor.rgb += mix(vec3(1.0,.97,.92),diffuseColor.rgb,.35)*pow(fr,3.0)*.15;
+    float up=normal.y*.5+.5; gl_FragColor.rgb += diffuseColor.rgb*vec3(1.0,.9,.8)*(1.0-up)*.06; }`)};
 const EYE_M=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.15});
 function critterParts(sp){if(critCache[sp])return critCache[sp];const t=buildCritterTemplate(sp);t.root.updateMatrixWorld(true);
   const inv=o=>new THREE.Matrix4().copy(o.matrixWorld).invert();const mi=inv(t.model),hi=inv(t.head),ei=inv(t.eyes[0]);const body=[],head=[],eye=[];
   t.model.traverse(o=>{if(!o.isMesh)return;let p=o.parent,which='body';while(p&&p!==t.model){if(t.eyes.includes(p)){which=p===t.eyes[0]?'eye':'skip';break}if(p===t.head){which='head';break}p=p.parent}
     if(which==='skip')return;const base=which==='body'?mi:which==='head'?hi:ei;
     (which==='body'?body:which==='head'?head:eye).push({geo:o.geometry,color:o.material.color.clone(),m:new THREE.Matrix4().multiplyMatrices(base,o.matrixWorld)})});
-  return critCache[sp]={body:merge(body),head:merge(head),eye:merge(eye),headPos:t.head.position.clone(),eyePos:t.eyes.map(e=>e.position.clone())}}
+  return critCache[sp]={body:merge(body),head:merge(head),eye:merge(eye).scale(1.16,1.16,1.16),headPos:t.head.position.clone(),eyePos:t.eyes.map(e=>e.position.clone())}}
 function buildCritter(sp){const P=critterParts(sp);
   const root=new THREE.Group(),bob=new THREE.Group();root.add(bob);const model=new THREE.Group();model.scale.setScalar(.95);bob.add(model);
   const body=new THREE.Mesh(P.body,CRIT_M);body.castShadow=true;model.add(body);
-  const head=new THREE.Group();head.position.copy(P.headPos);model.add(head);const hm=new THREE.Mesh(P.head,CRIT_M);hm.castShadow=true;head.add(hm);
+  const head=new THREE.Group();head.position.copy(P.headPos);head.scale.setScalar(1.1);model.add(head);const hm=new THREE.Mesh(P.head,CRIT_M);hm.castShadow=true;head.add(hm);
   const eyes=P.eyePos.map(q=>{const e=new THREE.Mesh(P.eye,EYE_M);e.position.copy(q);head.add(e);return e});
   const ring=new THREE.Mesh(RING_G,new THREE.MeshBasicMaterial({color:'#fff36b',transparent:true,opacity:0,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;root.add(ring);
   const blob=new THREE.Mesh(BLOB_G,BLOB_M);blob.scale.set(.95,1,1.1);blob.position.y=.02;root.add(blob);
@@ -437,9 +442,23 @@ function buildEnv(cols,rows,seed){
   // raised turf block + checker field
   const turf=new THREE.Mesh(new THREE.ExtrudeGeometry(rrShape(cols+.36,rows+.36,.32),{depth:BH-.08,bevelEnabled:true,bevelThickness:.04,bevelSize:.06,bevelSegments:3,curveSegments:8}).rotateX(-Math.PI/2),M('#4f9e31',{roughness:.95}));
   turf.position.y=.04;turf.receiveShadow=true;turf.castShadow=true;E.add(turf);
-  const px=64;const board=canvasTex(cols*px,rows*px,(g)=>{for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){g.fillStyle=(x+y)%2?'#7ccb4a':'#97da5e';g.fillRect(x*px,y*px,px,px)}
-    const q=rng(11);for(let i=0;i<cols*rows*14;i++){g.fillStyle=q()<.5?'rgba(60,130,40,.35)':'rgba(200,240,150,.35)';g.fillRect(q()*cols*px,q()*rows*px,2,4+q()*4)}
-    g.strokeStyle='rgba(60,120,40,.25)';g.lineWidth=2;for(let x=0;x<=cols;x++){g.beginPath();g.moveTo(x*px,0);g.lineTo(x*px,rows*px);g.stroke()}for(let y=0;y<=rows;y++){g.beginPath();g.moveTo(0,y*px);g.lineTo(cols*px,y*px);g.stroke()}});
+  // board: soft pillowy tiles with a light bevel, blades of grass and tiny clovers
+  const px=128;const board=canvasTex(cols*px,rows*px,(g)=>{const q=rng(11);
+    g.fillStyle='#4f9e31';g.fillRect(0,0,cols*px,rows*px);
+    const rr=(x,y,w,h,r)=>{g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()};
+    for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const X=x*px,Y=y*px,alt=(x+y)%2;
+      rr(X+5,Y+5,px-10,px-10,22);const gr=g.createLinearGradient(X,Y,X+px*.4,Y+px);
+      if(alt){gr.addColorStop(0,'#86cc4e');gr.addColorStop(1,'#6fbb3e')}else{gr.addColorStop(0,'#a0dc62');gr.addColorStop(1,'#86cf4f')}
+      g.fillStyle=gr;g.fill();
+      g.save();rr(X+5,Y+5,px-10,px-10,22);g.clip();
+      g.strokeStyle='rgba(255,255,220,.3)';g.lineWidth=4;rr(X+7,Y+7,px-10,px-10,21);g.stroke();
+      g.strokeStyle='rgba(40,100,30,.22)';g.lineWidth=6;rr(X+1,Y+1,px-8,px-8,22);g.stroke();
+      for(let i=0;i<26;i++){const gx=X+12+q()*(px-24),gy=Y+14+q()*(px-26),h=6+q()*8,lean=(q()-.5)*5;g.strokeStyle=q()<.55?'rgba(45,110,30,.32)':'rgba(215,245,160,.4)';g.lineWidth=2.2;g.lineCap='round';g.beginPath();g.moveTo(gx,gy);g.quadraticCurveTo(gx+lean*.3,gy-h*.6,gx+lean,gy-h);g.stroke()}
+      if(q()<.22){const cx=X+20+q()*(px-40),cy=Y+20+q()*(px-40);g.fillStyle=q()<.5?'rgba(255,255,255,.85)':'rgba(255,214,90,.9)';for(let k=0;k<5;k++){const a=k/5*Math.PI*2;g.beginPath();g.arc(cx+Math.cos(a)*3.2,cy+Math.sin(a)*3.2,2.6,0,7);g.fill()}g.fillStyle='#ffb43a';g.beginPath();g.arc(cx,cy,1.8,0,7);g.fill()}
+      else if(q()<.3){const cx=X+20+q()*(px-40),cy=Y+20+q()*(px-40);g.fillStyle='rgba(70,140,45,.55)';for(let k=0;k<3;k++){const a=k/3*Math.PI*2-.5;g.beginPath();g.arc(cx+Math.cos(a)*3.4,cy+Math.sin(a)*3.4,3.3,0,7);g.fill()}}
+      g.restore()}
+  });
+
   levelTex.push(board);
   const bm=new THREE.Mesh(new THREE.PlaneGeometry(cols,rows),new THREE.MeshStandardMaterial({map:board,roughness:1}));bm.rotation.x=-Math.PI/2;bm.position.y=BH+.003;bm.receiveShadow=true;E.add(bm);
   // white picket fence all the way round the path, open at the walkway
@@ -886,7 +905,7 @@ resize();
 startLevel(Math.max(4,Math.min(save.max,8)));state='menu';$('tip').hidden=true;
 $('loading').hidden=true;
 requestAnimationFrame(loop);
-window.__cam=camera;window.__game={bgm:()=>({on:BGM.on,step:BGM.step,ac:AC&&AC.state}),get G(){return G},tapAnimal,startLevel,checkFree,genLevel,solvable,params,info:()=>({calls:renderer.info.render.calls,tris:renderer.info.render.triangles,geos:renderer.info.memory.geometries})};
+window.__cam=camera;window.__game={camRig:()=>({camBase,camTarget}),bgm:()=>({on:BGM.on,step:BGM.step,ac:AC&&AC.state}),get G(){return G},tapAnimal,startLevel,checkFree,genLevel,solvable,params,info:()=>({calls:renderer.info.render.calls,tris:renderer.info.render.triangles,geos:renderer.info.memory.geometries})};
 })();
 </script>
 </body>
