@@ -50,6 +50,12 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 .ov{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:rgba(60,120,70,.35);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));backdrop-filter:blur(2px)}
 #ovWin{align-items:end;background:linear-gradient(to bottom,rgba(0,0,0,0) 45%,rgba(50,100,60,.3));backdrop-filter:none;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+#lvPill[data-tier=hard]{background:#ffe1c2;color:#b8561f}#lvPill[data-tier=super]{background:#ffd0dc;color:#c23d68}
+#banner{position:fixed;left:50%;top:30%;z-index:4;pointer-events:none;display:grid;justify-items:center;gap:2px;transform:translate(-50%,-50%);animation:banIn 2.1s ease-out forwards}
+#banner b{font-weight:400;font-size:44px;color:#fff;-webkit-text-stroke:7px #c23d68;paint-order:stroke fill;letter-spacing:1px;white-space:nowrap}
+#banner small{font-size:18px;color:#fff;-webkit-text-stroke:5px #5a3d32;paint-order:stroke fill}
+#banner.hard b{-webkit-text-stroke-color:#d06a1e}#banner.easy b{-webkit-text-stroke-color:#3f9a4c;font-size:36px}
+@keyframes banIn{0%{transform:translate(-50%,-50%) scale(.2) rotate(-8deg);opacity:0}14%{transform:translate(-50%,-50%) scale(1.15) rotate(2deg);opacity:1}24%{transform:translate(-50%,-50%) scale(1) rotate(0)}80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-60%) scale(.9)}}
 #finger{position:fixed;left:0;top:0;z-index:4;pointer-events:none;will-change:transform}
 #finger svg{display:block;transform-origin:18px 4px;filter:drop-shadow(0 3px 2px rgba(60,40,30,.3));animation:fpress 1.1s ease-in-out infinite}
 #finger .rip{position:absolute;left:-16px;top:-16px;width:32px;height:32px;border-radius:50%;border:4px solid #fff;opacity:0;animation:frip 1.1s ease-out infinite}
@@ -79,6 +85,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
   box-shadow:0 3px 0 rgba(90,61,50,.18);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
 .lv small{font-size:10px;color:var(--sun-d);letter-spacing:1px;min-height:12px}
 .lv.cur{background:var(--sun)}
+.lv.t-hard{box-shadow:inset 0 0 0 3px #ffb37a}.lv.t-super{box-shadow:inset 0 0 0 3px #ff8fab;background:#fff2f6}
 .lv:disabled{opacity:.4;cursor:default}
 @media (prefers-reduced-motion: reduce){*{animation:none!important}}
 </style>
@@ -97,6 +104,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <button class="ibtn" id="bRe" aria-label="다시 하기"><svg viewBox="0 0 24 24" fill="none" stroke="#5a3d32" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg></button>
     <button class="ibtn" id="bMenu" aria-label="메뉴"><svg viewBox="0 0 24 24" fill="none" stroke="#5a3d32" stroke-width="2.4" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
   </div>
+  <div id="banner" hidden><b id="banT"></b><small id="banS"></small></div>
   <div id="finger" hidden><div class="rip"></div><svg viewBox="0 0 64 80" width="58" height="72"><path d="M22 6c-4 0-7 3-7 7v34l-5-6c-3-3-8-3-10 0-2 2-2 6 0 8l15 19c3 4 8 7 14 7h11c9 0 15-7 15-16V35c0-4-3-6-6-6s-5 2-5 5v-3c0-4-3-6-6-6s-5 2-5 5v-2c0-4-3-6-6-6-2 0-4 1-5 3V13c0-4-3-7-7-7z" fill="#fff" stroke="#5a3d32" stroke-width="3.5" stroke-linejoin="round"/><path d="M17 15c0-3 2-5 4-5" stroke="#ffd0dc" stroke-width="3" stroke-linecap="round" fill="none"/></svg></div>
   <div class="tip" id="tip" hidden><span id="tipTx"></span></div>
   <div class="foot"><div class="pill" id="left">남은 친구 0</div></div>
@@ -587,15 +595,22 @@ function params(L){
   if(L===1)return{cols:3,rows:3,count:5,rocks:0};
   if(L===2)return{cols:4,rows:4,count:10,rocks:0};
   if(L===3)return{cols:4,rows:5,count:15,rocks:0};
-  const cols=clamp(4+Math.floor((L-2)/4),4,8);
-  const rows=clamp(cols+1+Math.floor((L-3)/9),5,11);
-  // gentle wave: every 5th level is a little harder, the one after is a breather
-  let dens=Math.min(.72+L*.009,.93);if(L%5===0)dens+=.03;if(L%5===1)dens-=.07;
-  const rocks=L>=6?Math.min(Math.floor((L-4)/3),Math.floor(cols*rows*.06)):0;
-  const sleep=L<8?0:L===8?1:Math.min(1+Math.floor((L-8)/4),6);
+  const tier=tierOf(L),T=TIERS[tier];
+  const cols=clamp(4+Math.floor((L-2)/4)+T.size,4,T.maxC||8);
+  const rows=clamp(cols+1+Math.floor((L-3)/9)+T.size,5,T.maxR||11);
+  // difficulty wave: easy breather, normal, normal, hard, super-hard ... repeating
+  const dens=clamp(.72+L*.009+T.dens,.6,.96);
+  const rocks=L>=6?Math.max(0,Math.min(Math.floor((L-4)/3)+T.rock,Math.floor(cols*rows*.07))):0;
+  const sleep=L<8?0:L===8?1:clamp(1+Math.floor((L-8)/4)+T.sleep,0,7);
   const shape=L<4?'rect':SHAPES[(L*5+3)%SHAPES.length];const mask=boardMask(shape,cols,rows);const cells=cols*rows-mask.flat().filter(Boolean).length;
-  return{cols,rows,count:Math.round(cells*dens),rocks:Math.min(rocks,Math.floor(cells*.06)),sleep,shape,mask};
+  return{cols,rows,count:Math.round(cells*dens),rocks:Math.min(rocks,Math.floor(cells*.07)),sleep,shape,mask,tier};
 }
+// level tiers: how a level feels. pick = which of the generated boards to keep (0 = most open, 1 = most tangled)
+const TIERS={easy:{name:'쉬어가는 판',size:-1,dens:-.14,rock:-1,sleep:-2,maxC:7,maxR:8,pick:.15,tries:14},
+  normal:{name:'보통',size:0,dens:0,rock:0,sleep:0,pick:.55,tries:14},
+  hard:{name:'어려운 판!',size:0,dens:.03,rock:1,sleep:1,pick:1,tries:22},
+  super:{name:'최고 난이도!',size:1,dens:.05,rock:1,sleep:2,pick:1,tries:30}};
+function tierOf(L){if(L<=3)return'easy';if(L===4)return'normal';const t=['easy','normal','normal','hard','super'][(L-1)%5];return t==='super'&&L<10?'hard':t}
 // board shapes: some cells become little flower beds that critters can run across but nobody stands on
 const SHAPES=['rect','corners','hole','cross','heart','diamond','rect','notch'];
 function boardMask(shape,c,r){const m=Array.from({length:r},()=>Array(c).fill(false));const big=c>=6&&r>=7;
@@ -615,7 +630,8 @@ function solvable(grid0,p,animals){const grid=grid0.map(r=>r.slice());const awak
   return left===0}
 function genLevel(L){
   const p=params(L);if(!p.mask){p.shape='rect';p.mask=boardMask('rect',p.cols,p.rows)}let best=null;
-  for(let attempt=0;attempt<14;attempt++){
+  const T=TIERS[p.tier||'easy'],cands=[];
+  for(let attempt=0;attempt<T.tries;attempt++){
     const r=rng(L*7919+attempt*104729+13);
     const grid=Array.from({length:p.rows},()=>Array(p.cols).fill(null));const obs=[];
     for(let i=0;i<p.rocks;i++){const c=r()*p.cols|0,rr=r()*p.rows|0;if(!grid[rr][c]&&!p.mask[rr][c]){const o={kind:'obs',r:rr,c,v:r()<.55?'rock':'hay',wig:0};grid[rr][c]=o;obs.push(o)}}
@@ -631,8 +647,9 @@ function genLevel(L){
       let n=0;for(const a of cand){if(n>=p.sleep)break;a.sleep=true;if(solvable(grid,p,animals))n++;else a.sleep=false}}
     const free=animals.filter(a=>!a.sleep&&clearPath(grid,p,a.r,a.c,a.dir,a)).length;
     const score=animals.length*3-free*2;
-    if(!best||score>best.score)best={score,grid,animals,obs,p};
+    cands.push({score,grid,animals,obs,p});
   }
+  cands.sort((a,b)=>a.score-b.score);best=cands[Math.round(T.pick*(cands.length-1))];
   return best;
 }
 
@@ -654,11 +671,15 @@ function updateEmotes(dt){emotes=emotes.filter(e=>{e.t+=dt;const k=e.t/e.life;if
 let idleT=2,G=null,parts=[],floats=[],shake=0,time=0,combo=0,lastExit=-9,state='title',hintT=0,hintA=null,tipTimer=0,levelGroup=null;
 const cellPos=(c,r)=>new THREE.Vector3(c-(G.cols-1)/2,BH,r-(G.rows-1)/2);
 
+function showBanner(){const b=$('banner'),t=G.tier;if(G.L<4||t==='normal'){b.hidden=true;return}
+  b.className=t;$('banT').textContent=TIERS[t].name;$('banS').textContent=t==='easy'?'잠깐 쉬어 가요':t==='hard'?'천천히 생각해 봐요':'친구들이 잔뜩! 실수는 3번까지';
+  b.hidden=true;void b.offsetWidth;b.hidden=false;clearTimeout(b._t);b._t=setTimeout(()=>b.hidden=true,window.__banHold||2200);
+  if(t!=='easy')setTimeout(()=>SFX.alarm&&SFX.alarm(t),150)}
 function startLevel(L){
   const g=genLevel(L);
   if(levelGroup)scene.remove(levelGroup);
   levelGroup=new THREE.Group();scene.add(levelGroup);
-  G={L,idleFor:0,taps:0,guide:null,cols:g.p.cols,rows:g.p.rows,grid:g.grid,obs:g.obs,hearts:3,mist:0,done:false,animals:g.animals};
+  G={L,tier:g.p.tier||'easy',idleFor:0,taps:0,guide:null,cols:g.p.cols,rows:g.p.rows,grid:g.grid,obs:g.obs,hearts:3,mist:0,done:false,animals:g.animals};
   const env=buildEnv(G.cols,G.rows,L*31+7,g.p.mask);G.mask=g.p.mask;G.track={x:G.cols/2+.65,z:G.rows/2+.65,door:env.doorZ};
   G.animals.forEach((a,i)=>{Object.assign(a,{id:i,off:0,state:'idle',v:0,bt:0,wig:0,sq:0,blinkT:1+a.seed*3,appear:-(a.r*.6+a.c*.4)*.045-.05,poof:0});
     a.m=buildCritter(a.sp);a.m.root.position.copy(cellPos(a.c,a.r));a.m.root.rotation.y=Math.atan2(DX[a.dir],DZ[a.dir]);a.m.root.userData.animal=a;levelGroup.add(a.m.root);if(a.sleep){addNightcap(a.m,a.sp);a.zT=a.seed*2}});
@@ -666,6 +687,7 @@ function startLevel(L){
   parts=[];floats=[];combo=0;hintA=null;emotes=[];capFly=[];party.on=false;party.list=[];$('left').style.opacity='';
   fitCamera();renderHUD();
   const tips={1:'손가락이 가리키는 친구를 톡! 얼굴 쪽으로 나가요',2:'같은 방향으로 줄 선 친구들은 줄줄이 따라 나가요',3:'부딪히면 하트가 줄어요. 차근차근!',6:'바위와 건초더미는 움직이지 않아요',8:'잠꾸러기는 바로 옆 친구가 나가면 깨어나요'};
+  showBanner();
   if(tips[L]){$('tipTx').textContent=tips[L];$('tip').hidden=false;tipTimer=L===1?99:6}else $('tip').hidden=true;
   state='play';
 }
@@ -694,7 +716,7 @@ function resize(){const W=innerWidth,H=innerHeight;renderer.setSize(W,H,false);c
 
 const heartSvg=on=>`<svg viewBox="0 0 24 24" class="${on?'':'lost'}"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.3 3 4.5 6.6 4.5c2.2 0 3.6 1.3 4.4 2.6.8-1.3 2.2-2.6 4.4-2.6 3.6 0 5.7 3.8 4.2 7.3C19.5 16.4 12 21 12 21z" fill="#ff6f91" stroke="#c94a6c" stroke-width="1.5"/><ellipse cx="7.4" cy="8.6" rx="1.8" ry="1.2" fill="#fff" opacity=".7"/></svg>`;
 function renderHUD(){
-  $('lvPill').textContent='레벨 '+G.L;
+  $('lvPill').textContent='레벨 '+G.L;$('lvPill').dataset.tier=G.tier;
   $('hearts').innerHTML=[0,1,2].map(i=>heartSvg(i<G.hearts)).join('');
   $('left').textContent='남은 친구 '+G.animals.filter(a=>a.state==='idle'||a.state==='bump').length;
 }
@@ -920,7 +942,7 @@ const order7=p=>party.list.indexOf(p)+2;
 const easeInOut=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2,easeOut=t=>1-Math.pow(1-t,3);
 function buildLevels(){
   const n=Math.max(30,Math.ceil((save.max+5)/5)*5);let h='';
-  for(let i=1;i<=n;i++){const s=save.stars[i]||0;h+=`<button class="lv${i===save.max?' cur':''}" data-l="${i}" ${i>save.max?'disabled':''}>${i}<small>${'★'.repeat(s)}</small></button>`}
+  for(let i=1;i<=n;i++){const s=save.stars[i]||0;const tr=tierOf(i);h+=`<button class="lv${i===save.max?' cur':''} t-${tr}" data-l="${i}" ${i>save.max?'disabled':''}>${i}<small>${'★'.repeat(s)}</small></button>`}
   $('lvgrid').innerHTML=h;
 }
 $('lvgrid').addEventListener('click',e=>{const b=e.target.closest('.lv');if(!b||b.disabled)return;audio();SFX.ui();show(null);startLevel(+b.dataset.l)});
