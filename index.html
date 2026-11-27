@@ -188,7 +188,7 @@ const fill=new THREE.DirectionalLight(0xffe0f0,.25);fill.position.set(6,5,10);sc
 const rim=new THREE.DirectionalLight(0xfff6e0,.55);rim.position.set(3,6,-12);scene.add(rim);
 
 // shared geometry + materials
-const GS=new THREE.SphereGeometry(1,28,20), GS_LO=new THREE.SphereGeometry(1,14,10);
+const GS=new THREE.SphereGeometry(1,18,12), GS_LO=new THREE.SphereGeometry(1,14,10);
 const GC=new THREE.ConeGeometry(1,1,20);
 const matCache={};
 function M(color,opt={}){const k=color+JSON.stringify(opt);if(!matCache[k])matCache[k]=new THREE.MeshStandardMaterial(Object.assign({color,roughness:.62,metalness:0},opt));return matCache[k]}
@@ -196,7 +196,7 @@ const BLACK=M('#2a1d1a',{roughness:.18}), WHITE=M('#ffffff',{roughness:.3,emissi
 const fmCache={};
 function FM(color){if(!fmCache[color])fmCache[color]=new THREE.MeshPhysicalMaterial({color,roughness:.9,sheen:.6,sheenRoughness:.8,sheenColor:new THREE.Color('#ffffff')});return fmCache[color]}
 let _fluff=null;
-function fluffGeo(){if(_fluff)return _fluff;const g=new THREE.SphereGeometry(1,20,14);const ps=[{geo:g,color:new THREE.Color(1,1,1),m:new THREE.Matrix4().compose(new THREE.Vector3(0,.36,-.04),new THREE.Quaternion(),new THREE.Vector3(.367,.31,.396))}];
+function fluffGeo(){if(_fluff)return _fluff;const g=new THREE.SphereGeometry(1,12,8);const ps=[{geo:g,color:new THREE.Color(1,1,1),m:new THREE.Matrix4().compose(new THREE.Vector3(0,.36,-.04),new THREE.Quaternion(),new THREE.Vector3(.367,.31,.396))}];
   const add=(x,y,z,r)=>ps.push({geo:g,color:new THREE.Color(1,1,1),m:new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion(),new THREE.Vector3(r,r*.9,r))});
   for(let i=0;i<9;i++){const a=i/9*Math.PI*2;add(Math.cos(a)*.27,.35+(i%2)*.025,Math.sin(a)*.31-.04,.165)}
   for(let i=0;i<5;i++){const a=i/5*Math.PI*2+.3;add(Math.cos(a)*.14,.52,Math.sin(a)*.17-.07,.16)}
@@ -226,7 +226,7 @@ const SPEC={
 };
 const SP_KEYS=['bunny','chick','cow','cat','frog','bear'];
 
-function buildCritter(sp){
+function buildCritterTemplate(sp){
   const C=SPEC[sp];const root=new THREE.Group();const bob=new THREE.Group();root.add(bob);
   const model=new THREE.Group();model.scale.setScalar(.95);bob.add(model);
   const mb=M(C.body),md=M(C.dark),mf=M(C.feet);
@@ -288,8 +288,28 @@ function buildCritter(sp){
   const ring=new THREE.Mesh(new THREE.RingGeometry(.38,.48,32),new THREE.MeshBasicMaterial({color:'#fff36b',transparent:true,opacity:0,depthWrite:false}));
   ring.rotation.x=-Math.PI/2;ring.position.y=.03;root.add(ring);
   const blob=new THREE.Mesh(BLOB_G,BLOB_M);blob.scale.set(.95,1,1.1);blob.position.y=.02;root.add(blob);
+  return {root,bob,model,head,eyes,ring,blob};
+}
+// Bake each species once into a few merged meshes (body, head, eye) so a full board stays light on phones.
+const critCache={};
+const CRIT_M=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.72});
+const EYE_M=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.15});
+function critterParts(sp){if(critCache[sp])return critCache[sp];const t=buildCritterTemplate(sp);t.root.updateMatrixWorld(true);
+  const inv=o=>new THREE.Matrix4().copy(o.matrixWorld).invert();const mi=inv(t.model),hi=inv(t.head),ei=inv(t.eyes[0]);const body=[],head=[],eye=[];
+  t.model.traverse(o=>{if(!o.isMesh)return;let p=o.parent,which='body';while(p&&p!==t.model){if(t.eyes.includes(p)){which=p===t.eyes[0]?'eye':'skip';break}if(p===t.head){which='head';break}p=p.parent}
+    if(which==='skip')return;const base=which==='body'?mi:which==='head'?hi:ei;
+    (which==='body'?body:which==='head'?head:eye).push({geo:o.geometry,color:o.material.color.clone(),m:new THREE.Matrix4().multiplyMatrices(base,o.matrixWorld)})});
+  return critCache[sp]={body:merge(body),head:merge(head),eye:merge(eye),headPos:t.head.position.clone(),eyePos:t.eyes.map(e=>e.position.clone())}}
+function buildCritter(sp){const P=critterParts(sp);
+  const root=new THREE.Group(),bob=new THREE.Group();root.add(bob);const model=new THREE.Group();model.scale.setScalar(.95);bob.add(model);
+  const body=new THREE.Mesh(P.body,CRIT_M);body.castShadow=true;model.add(body);
+  const head=new THREE.Group();head.position.copy(P.headPos);model.add(head);const hm=new THREE.Mesh(P.head,CRIT_M);hm.castShadow=true;head.add(hm);
+  const eyes=P.eyePos.map(q=>{const e=new THREE.Mesh(P.eye,EYE_M);e.position.copy(q);head.add(e);return e});
+  const ring=new THREE.Mesh(RING_G,new THREE.MeshBasicMaterial({color:'#fff36b',transparent:true,opacity:0,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;root.add(ring);
+  const blob=new THREE.Mesh(BLOB_G,BLOB_M);blob.scale.set(.95,1,1.1);blob.position.y=.02;root.add(blob);
   return {root,bob,head,eyes,ring,blob};
 }
+const RING_G=new THREE.RingGeometry(.38,.48,32);
 
 function buildObstacle(kind){
   const g=new THREE.Group();const inner=new THREE.Group();g.add(inner);
@@ -313,7 +333,7 @@ const grassTex=canvasTex(256,256,(g,w,h)=>{g.fillStyle='#7cc254';g.fillRect(0,0,
 let levelTex=[];
 
 // ---------- merged / instanced scenery helpers ----------
-const SL=new THREE.SphereGeometry(1,16,12), CYL=new THREE.CylinderGeometry(1,1,1,12), CONE=new THREE.ConeGeometry(1,1,10), BOX=new THREE.BoxGeometry(1,1,1);
+const SL=new THREE.SphereGeometry(1,12,9),SXS=new THREE.SphereGeometry(1,7,5), CYL=new THREE.CylinderGeometry(1,1,1,12), CONE=new THREE.ConeGeometry(1,1,10), BOX=new THREE.BoxGeometry(1,1,1);
 const VC=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.78});
 function part(geo,color,x,y,z,sx=1,sy=sx,sz=sx,rx=0,ry=0,rz=0){return{geo,color:new THREE.Color(color),m:new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,rz)),new THREE.Vector3(sx,sy,sz))}}
 function merge(parts){let n=0;const gs=parts.map(p=>{const g=(p.geo.index?p.geo.toNonIndexed():p.geo.clone());g.applyMatrix4(p.m);n+=g.attributes.position.count;return g});
@@ -328,11 +348,11 @@ function instanced(geo,mat,list,shadow=true){const im=new THREE.InstancedMesh(ge
 const PROPS=(()=>{
   const tree=(leaf,leaf2,fruit)=>{const p=[part(CYL,'#9a6a3e',0,.45,0,.13,.9,.13),part(CYL,'#8a5a33',.12,.75,0,.05,.4,.05,0,0,-.7)];
     for(const [x,y,z,r,c] of[[0,1.3,0,.72,leaf],[.46,1.08,.18,.5,leaf2],[-.44,1.12,-.1,.52,leaf2],[.08,1.78,-.05,.5,leaf],[-.18,1.5,.38,.42,leaf],[.3,1.55,-.35,.4,leaf2]])p.push(part(SL,c,x,y,z,r,r*.92,r));
-    if(fruit)for(let i=0;i<8;i++){const a=i*2.3,h=1.05+(i%3)*.3;p.push(part(SL,fruit,Math.cos(a)*.7,h,Math.sin(a)*.66+.05,.075))}
+    if(fruit)for(let i=0;i<8;i++){const a=i*2.3,h=1.05+(i%3)*.3;p.push(part(SXS,fruit,Math.cos(a)*.7,h,Math.sin(a)*.66+.05,.075))}
     return merge(p)};
   const bush=(c1,c2,fl)=>{const p=[];for(const [x,z,r,c] of[[0,0,.42,c1],[.36,.12,.3,c2],[-.34,.06,.32,c2],[.05,-.25,.3,c1]])p.push(part(SL,c,x,r*.72,z,r,r*.82,r));
-    if(fl)for(let i=0;i<7;i++){const a=i*2.1;p.push(part(SL,fl[i%fl.length],Math.cos(a)*.34,.42+(i%2)*.12,Math.sin(a)*.25+.1,.055))}return merge(p)};
-  const flower=(petal)=>{const p=[part(CYL,'#4f9a35',0,.09,0,.012,.18,.012),part(SL,'#ffd23f',0,.19,0,.035)];for(let i=0;i<5;i++){const a=i/5*Math.PI*2;p.push(part(SL,petal,Math.cos(a)*.05,.19,Math.sin(a)*.05,.035,.022,.035))}return merge(p)};
+    if(fl)for(let i=0;i<7;i++){const a=i*2.1;p.push(part(SXS,fl[i%fl.length],Math.cos(a)*.34,.42+(i%2)*.12,Math.sin(a)*.25+.1,.055))}return merge(p)};
+  const flower=(petal)=>{const p=[part(CYL,'#4f9a35',0,.09,0,.012,.18,.012),part(SXS,'#ffd23f',0,.19,0,.035)];for(let i=0;i<5;i++){const a=i/5*Math.PI*2;p.push(part(SXS,petal,Math.cos(a)*.05,.19,Math.sin(a)*.05,.035,.022,.035))}return merge(p)};
   const tuft=merge([part(CONE,'#4a9e30',0,.09,0,.03,.2,.03,0,0,.25),part(CONE,'#5cb83a',.04,.08,.01,.025,.17,.025,0,0,-.3),part(CONE,'#3f8f28',-.03,.07,-.02,.025,.15,.025,.2,0,.1)]);
   const mush=merge([part(CYL,'#fff1dc',0,.08,0,.05,.16,.05),part(SL,'#ff5d73',0,.17,0,.11,.07,.11),part(SL,'#ffffff',.04,.22,.03,.02),part(SL,'#ffffff',-.05,.2,-.02,.018)]);
   const stone=merge([part(SL,'#b9b4c2',0,.05,0,.16,.09,.13),part(SL,'#cfcad6',.1,.04,.06,.09,.06,.08)]);
@@ -399,7 +419,7 @@ function buildEnv(cols,rows,seed){
     ||Math.hypot(x-pond.x,z-pond.z)<pond.r+.6||(Math.abs(x-garden.x)<garden.w/2+.5&&Math.abs(z-garden.z)<garden.h/2+.5);
   // dense colourful woods all around
   const treeL=PROPS.trees.map(()=>[]),bushL=PROPS.bushes.map(()=>[]);
-  for(let i=0;i<520&&treeL.flat().length+bushL.flat().length<150;i++){const x=(r()-.5)*(fw+16),z=(r()-.5)*(fh+16);if(blocked(x,z))continue;
+  for(let i=0;i<520&&treeL.flat().length+bushL.flat().length<115;i++){const x=(r()-.5)*(fw+16),z=(r()-.5)*(fh+16);if(blocked(x,z))continue;
     const near=Math.abs(x)<fw/2+1.6&&Math.abs(z)<fh/2+1.6;const s=.7+r()*.55;
     if(near||r()<.35)bushL[(r()*3)|0].push({x,z,s:s*.95,ry:r()*6});else{const k=r();treeL[k<.45?0:k<.65?1:k<.85?2:3].push({x,z,s,ry:r()*6})}}
   treeL.forEach((l,i)=>E.add(instanced(PROPS.trees[i],VC,l)));bushL.forEach((l,i)=>E.add(instanced(PROPS.bushes[i],VC,l)));
@@ -700,8 +720,14 @@ function drawFx(){
   c.globalAlpha=1;
 }
 
+// adaptive quality: if the phone struggles, lower resolution, then shadows
+const Q={dpr:Math.min(window.devicePixelRatio||1,2),acc:0,n:0,step:0,wait:1.5};
+function tuneQuality(dt){if(Q.step>=3||state!=='play')return;if(Q.wait>0){Q.wait-=dt;return}Q.acc+=dt;Q.n++;
+  if(Q.n<90)return;const avg=Q.acc/Q.n;Q.acc=0;Q.n=0;Q.wait=1;
+  if(avg>1/42){Q.step++;if(Q.step===1){Q.dpr=Math.min(Q.dpr,1.5)}else if(Q.step===2){Q.dpr=Math.min(Q.dpr,1.15);sun.shadow.mapSize.set(1024,1024);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}}else{sun.castShadow=false}
+    renderer.setPixelRatio(Q.dpr);renderer.setSize(innerWidth,innerHeight,false)}else Q.step=3}
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);renderer.render(scene,camera);drawFx();requestAnimationFrame(loop)}
+function loop(now){const rdt=(now-last)/1000,dt=Math.min(.05,rdt);last=now;tuneQuality(Math.min(rdt,.2));update(dt);renderer.render(scene,camera);drawFx();requestAnimationFrame(loop)}
 
 // ---------- flow ----------
 function show(id){['ovTitle','ovLevels','ovWin','ovFail'].forEach(k=>$(k).hidden=k!==id);state=id?'menu':'play'}
@@ -742,7 +768,7 @@ resize();
 startLevel(Math.max(4,Math.min(save.max,8)));state='menu';$('tip').hidden=true;
 $('loading').hidden=true;
 requestAnimationFrame(loop);
-window.__game={get G(){return G},tapAnimal,startLevel,checkFree};
+window.__game={get G(){return G},tapAnimal,startLevel,checkFree,info:()=>({calls:renderer.info.render.calls,tris:renderer.info.render.triangles,geos:renderer.info.memory.geometries})};
 })();
 </script>
 </body>
