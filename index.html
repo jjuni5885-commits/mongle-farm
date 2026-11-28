@@ -182,6 +182,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 #ovMove{z-index:6}.card p.mvP{font-size:15px;word-break:keep-all;margin-bottom:6px}.card p.mvS{font-size:13px;opacity:.75;margin:6px 0 12px;word-break:keep-all}
 .mvRow{display:flex;gap:8px;align-items:stretch}.mvRow input{flex:1;min-width:0;border:2px solid #e8dcc4;border-radius:14px;padding:0 12px;font-family:var(--font);font-size:15px;color:var(--ink);background:#fff}
 .mvRow .btn{width:auto;margin:0;padding:10px 14px;font-size:16px}
+#hurt{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 50%,rgba(255,80,110,0) 45%,rgba(255,60,100,.55) 100%)}
 @media (prefers-reduced-motion: reduce){*{animation:none!important}}
 </style>
 </head>
@@ -205,6 +206,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
   <div class="foot"><div class="pill" id="left">남은 친구 0</div><button class="boost" id="bBal" aria-label="풍선 아이템"><svg viewBox="0 0 32 40"><path d="M16 26c-1 3 1 5-1 8s1 5 0 6" fill="none" stroke="#8a6a5a" stroke-width="1.4" stroke-linecap="round"/><ellipse cx="16" cy="13" rx="11" ry="12.5" fill="#ff8fb1"/><path d="M13.5 25h5l-2.5 2.5z" fill="#ff6f99"/><ellipse cx="11.5" cy="8" rx="3" ry="4.5" fill="#fff" opacity=".55" transform="rotate(-25 11.5 8)"/></svg><b id="balN">3</b></button></div>
 </div>
 <div id="toast"></div>
+<div id="hurt"></div>
 <div class="loading" id="loading"><div class="ldBox"><div class="ldHop"><svg viewBox="0 0 48 48" width="92" height="92"><ellipse cx="17" cy="9" rx="5" ry="10" fill="#fff" transform="rotate(-12 17 9)"/><ellipse cx="31" cy="9" rx="5" ry="10" fill="#fff" transform="rotate(12 31 9)"/><ellipse cx="17" cy="10" rx="2.2" ry="6" fill="#ffb3ca" transform="rotate(-12 17 10)"/><ellipse cx="31" cy="10" rx="2.2" ry="6" fill="#ffb3ca" transform="rotate(12 31 10)"/><circle cx="24" cy="29" r="15" fill="#fff"/><ellipse cx="18.5" cy="28" rx="2.3" ry="2.9" fill="#2a1d1a"/><ellipse cx="29.5" cy="28" rx="2.3" ry="2.9" fill="#2a1d1a"/><circle cx="19.2" cy="27" r=".9" fill="#fff"/><circle cx="30.2" cy="27" r=".9" fill="#fff"/><ellipse cx="14.5" cy="33" rx="3" ry="1.8" fill="#ffb3ca"/><ellipse cx="33.5" cy="33" rx="3" ry="1.8" fill="#ffb3ca"/><path d="M22 33q2 2 4 0" fill="none" stroke="#2a1d1a" stroke-width="1.4" stroke-linecap="round"/></svg></div><div class="ldShadow"></div><b>몽글 목장 대탈출</b><span id="ldTx">목장 문을 여는 중<i>.</i><i>.</i><i>.</i></span></div></div>
 
 <div class="ov" id="ovTitle">
@@ -639,7 +641,8 @@ function updateHats(){if(!hatIM)return;let i=0;const put=(m,sp)=>{const q=HAT_AT
 function buildShop(){$('shopCoinN').textContent=save.coins||0;const own=save.owned||['none'];
   $('shopGrid').innerHTML=HATS.map(h=>{const has=own.includes(h.id),on=(save.hat||'none')===h.id;
     return `<button class="hat${on?' on':''}${!has&&(save.coins||0)<h.price?' lock':''}" data-h="${h.id}"><svg class="pic" viewBox="0 0 64 48">${h.svg}</svg><b>${h.name}</b><small>${on?'쓰는 중':has?'쓰기':'<svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg>'+h.price}</small></button>`}).join('')}
-function addNightcap(m,sp){const g=new THREE.Group();const cone=new THREE.Mesh(CAP_G,CAP_M);cone.castShadow=true;cone.rotation.z=1.05;g.add(cone);
+const CAP_DEEP=CAP_M.clone();CAP_DEEP.color.set('#c69cff');
+function addNightcap(m,sp,deep){const g=new THREE.Group();const cone=new THREE.Mesh(CAP_G,deep?CAP_DEEP:CAP_M);g.userData.cone=cone;cone.castShadow=true;cone.rotation.z=1.05;g.add(cone);
   const brim=new THREE.Mesh(new THREE.TorusGeometry(.19,.05,8,20),POM_M);brim.rotation.x=Math.PI/2;g.add(brim);
   const pom=new THREE.Mesh(GS,POM_M);pom.scale.setScalar(.085);pom.position.set(-Math.sin(1.05)*.5,Math.cos(1.05)*.5,0);g.add(pom);
   const q=CAP_AT[sp]||[0,.3,0,-.3];g.position.set(q[0],q[1],q[2]);g.rotation.x=q[3];g.scale.setScalar(1.25);m.head.add(g);m.cap=g;return g}
@@ -925,10 +928,10 @@ function params(L){
   return{cols,rows,count:Math.round(cells*dens),rocks:Math.min(rocks,Math.floor(cells*.07)),sleep,shape,mask,tier};
 }
 // level tiers: how a level feels. pick = which of the generated boards to keep (0 = most open, 1 = most tangled)
-const TIERS={easy:{name:'쉬어가는 판',size:-1,dens:-.14,rock:-1,sleep:-2,maxC:7,maxR:8,pick:.15,tries:14},
-  normal:{name:'보통',size:0,dens:0,rock:0,sleep:0,pick:.55,tries:14},
-  hard:{name:'어려운 판!',size:0,dens:.03,rock:1,sleep:1,pick:1,tries:22},
-  super:{name:'최고 난이도!',size:1,dens:.05,rock:1,sleep:2,pick:1,tries:30}};
+const TIERS={easy:{name:'쉬어가는 판',size:-1,dens:-.14,rock:-1,sleep:-2,maxC:7,maxR:8,pick:.15,tries:14,bend:0},
+  normal:{name:'보통',size:0,dens:0,rock:0,sleep:0,pick:.6,tries:16,bend:1,out:.5},
+  hard:{name:'어려운 판!',size:0,dens:.03,rock:1,sleep:1,pick:1,tries:26,bend:2,out:.12},
+  super:{name:'최고 난이도!',size:1,dens:.05,rock:1,sleep:2,pick:1,tries:34,bend:2.6,out:.05}};
 function tierOf(L){if(L<=3)return'easy';if(L===4)return'normal';const t=['easy','normal','normal','hard','super'][(L-1)%5];return t==='super'&&L<10?'hard':t}
 // board shapes: some cells become little flower beds that critters can run across but nobody stands on
 const SHAPES=['rect','corners','hole','cross','heart','diamond','rect','notch'];
@@ -943,10 +946,16 @@ function boardMask(shape,c,r){const m=Array.from({length:r},()=>Array(c).fill(fa
   return m}
 function clearPath(grid,p,r,c,d,self){let x=c+DX[d],y=r+DZ[d];while(x>=0&&y>=0&&x<p.cols&&y<p.rows){if(grid[y][x]&&grid[y][x]!==self)return false;x+=DX[d];y+=DZ[d]}return true}
 // greedy solve: leaving never blocks anyone and waking is permanent, so greedy finds a way whenever one exists
-function solvable(grid0,p,animals){const grid=grid0.map(r=>r.slice());const awake=new Set(animals.filter(a=>!a.sleep));let left=animals.length;
+function solvable(grid0,p,animals){const grid=grid0.map(r=>r.slice());const awake=new Set(animals.filter(a=>!a.sleep));const need=new Map(animals.map(a=>[a,+a.sleep||0]));let left=animals.length;
   for(let prog=true;prog&&left;){prog=false;for(const a of animals){if(!awake.has(a)||grid[a.r][a.c]!==a)continue;
-    if(clearPath(grid,p,a.r,a.c,a.dir,a)){grid[a.r][a.c]=null;left--;prog=true;for(const b of animals)if(Math.abs(b.r-a.r)+Math.abs(b.c-a.c)===1)awake.add(b)}}}
+    if(clearPath(grid,p,a.r,a.c,a.dir,a)){grid[a.r][a.c]=null;left--;prog=true;for(const b of animals)if(Math.abs(b.r-a.r)+Math.abs(b.c-a.c)===1){const n=need.get(b)-1;need.set(b,n);if(n<=0)awake.add(b)}}}}
   return left===0}
+// how deep is the puzzle? peel all currently-free friends in rounds; more rounds and fewer free at a time = harder to read
+function analyze(grid0,p,animals){const grid=grid0.map(r=>r.slice());const awake=new Set(animals.filter(a=>!a.sleep));const need=new Map(animals.map(a=>[a,+a.sleep||0]));let left=animals.length,depth=0,frees=[];
+  while(left){const fr=animals.filter(a=>awake.has(a)&&grid[a.r][a.c]===a&&clearPath(grid,p,a.r,a.c,a.dir,a));if(!fr.length)return{ok:false};
+    depth++;frees.push(fr.length);for(const a of fr){grid[a.r][a.c]=null;left--}for(const a of fr)for(const b of animals)if(Math.abs(b.r-a.r)+Math.abs(b.c-a.c)===1){const n=need.get(b)-1;need.set(b,n);if(n<=0)awake.add(b)}}
+  const edge=a=>a.r===0||a.c===0||a.r===p.rows-1||a.c===p.cols-1;
+  return{ok:true,depth,free0:frees[0],avg:frees.reduce((x,y)=>x+y,0)/frees.length,maxFree:Math.max(...frees)}}
 function genLevel(L){
   const p=params(L);if(!p.mask){p.shape='rect';p.mask=boardMask('rect',p.cols,p.rows)}let best=null;
   const T=TIERS[p.tier||'easy'],cands=[];
@@ -959,16 +968,37 @@ function genLevel(L){
     while(animals.length<p.count&&tries<p.cols*p.rows*40){tries++;
       const c=r()*p.cols|0,rr=r()*p.rows|0;if(grid[rr][c]||p.mask[rr][c])continue;
       const dirs=[0,1,2,3].filter(d=>clearPath(grid,p,rr,c,d));if(!dirs.length)continue;
-      const a={kind:'animal',r:rr,c,dir:dirs[r()*dirs.length|0],sp:spPool[r()*spPool.length|0],seed:r()};grid[rr][c]=a;animals.push(a)}
+      // prefer long runs (facing into the board): edge friends rarely point straight out, so 'clear the corners first' stops working
+      const len=d=>{let k=0,x=c+DX[d],y=rr+DZ[d];while(x>=0&&y>=0&&x<p.cols&&y<p.rows){k++;x+=DX[d];y+=DZ[d]}return k};
+      const late=Math.min(1,.55+L/60),ws=dirs.map(d=>{const l=len(d);return Math.pow(l+1,(T.bend||0)*late)*(l===0?(T.out??1)*(L>30?.6:1):1)}),tot=ws.reduce((x,y)=>x+y,0);let pick=r()*tot,di=0;while(di<ws.length-1&&pick>ws[di]){pick-=ws[di];di++}
+      const a={kind:'animal',r:rr,c,dir:dirs[di],sp:spPool[r()*spPool.length|0],seed:r()};grid[rr][c]=a;animals.push(a)}
+    // harder tiers: fill first, then repair. Everyone starts facing mostly inward; when the board gets stuck we turn one
+    // stuck friend (preferably an inner one) toward an open lane. Free moves then pop up all over the board, not just on the rim.
+    if(T.bend&&L>=6){animals.forEach(a=>grid[a.r][a.c]=null);animals.length=0;
+      const cells=[];for(let y=0;y<p.rows;y++)for(let x=0;x<p.cols;x++)if(!grid[y][x]&&!p.mask[y][x])cells.push([x,y]);
+      for(let i=cells.length-1;i>0;i--){const j=r()*(i+1)|0;[cells[i],cells[j]]=[cells[j],cells[i]]}
+      const lenAt=(x0,y0,d)=>{let k=0,x=x0+DX[d],y=y0+DZ[d];while(x>=0&&y>=0&&x<p.cols&&y<p.rows){k++;x+=DX[d];y+=DZ[d]}return k};
+      const wpick=(ws)=>{const t=ws.reduce((x,y)=>x+y,0);let q=r()*t,i=0;while(i<ws.length-1&&q>ws[i]){q-=ws[i];i++}return i};
+      for(const [x,y] of cells.slice(0,Math.round(p.count*.82))){const ws=[0,1,2,3].map(d=>{const l=lenAt(x,y,d);return Math.pow(l+1,T.bend)*(l===0?(T.out??1)*(L>30?.6:1):1)});
+        const a={kind:'animal',r:y,c:x,dir:wpick(ws),sp:spPool[r()*spPool.length|0],seed:r()};grid[y][x]=a;animals.push(a)}
+      const g2=grid.map(row=>row.slice());let left=new Set(animals);
+      for(let guard=0;left.size&&guard<600;guard++){
+        const free=[...left].filter(a=>clearPath(g2,p,a.r,a.c,a.dir,a));
+        if(free.length){const a=free[r()*free.length|0];g2[a.r][a.c]=null;left.delete(a);continue}
+        // stuck: turn someone toward an open lane, inner friends first
+        const opts=[];for(const a of left){for(let d=0;d<4;d++)if(d!==a.dir&&clearPath(g2,p,a.r,a.c,d,a)){const l=lenAt(a.c,a.r,d),edge=a.r===0||a.c===0||a.r===p.rows-1||a.c===p.cols-1;opts.push({a,d,w:(edge?1:4)*(l===0?(T.out??1):1)*(1+l*.3)})}}
+        if(opts.length){const o=opts[wpick(opts.map(o=>o.w))];o.a.dir=o.d}
+        else{const a=[...left][r()*left.size|0];left.delete(a);g2[a.r][a.c]=null;grid[a.r][a.c]=null;animals.splice(animals.indexOf(a),1)}}
+    }
     // sleepy friends: pick ones that stay solvable (they wake when a next-door friend leaves)
     if(p.sleep){const cand=animals.filter(a=>animals.some(b=>Math.abs(b.r-a.r)+Math.abs(b.c-a.c)===1));
       for(let i=cand.length-1;i>0;i--){const j=r()*(i+1)|0;[cand[i],cand[j]]=[cand[j],cand[i]]}
-      let n=0;for(const a of cand){if(n>=p.sleep)break;a.sleep=true;if(solvable(grid,p,animals))n++;else a.sleep=false}}
-    const free=animals.filter(a=>!a.sleep&&clearPath(grid,p,a.r,a.c,a.dir,a)).length;
-    const score=animals.length*3-free*2;
-    cands.push({score,grid,animals,obs,p});
+      let n=0;for(const a of cand){if(n>=p.sleep)break;a.sleep=(L>=21&&r()<.45)?2:1;if(solvable(grid,p,animals))n++;else{a.sleep=a.sleep===2?1:0;if(a.sleep&&solvable(grid,p,animals))n++;else a.sleep=0}}}
+    const an=analyze(grid,p,animals);if(!an.ok)continue;
+    const score=an.depth*3-an.free0*2-an.avg*2;
+    cands.push({score,grid,animals,obs,p,an});
   }
-  cands.sort((a,b)=>a.score-b.score);best=cands[Math.round(T.pick*(cands.length-1))];
+  cands.sort((a,b)=>a.score-b.score);best=cands[Math.round(T.pick*(cands.length-1))];p.an=best.an;
   return best;
 }
 
@@ -1003,13 +1033,13 @@ function startLevel(L){
   G={L,cleared0:!!(save.stars&&save.stars[L]),tier:g.p.tier||'easy',idleFor:0,taps:0,guide:null,cols:g.p.cols,rows:g.p.rows,grid:g.grid,obs:g.obs,hearts:3,mist:0,done:false,animals:g.animals};
   const env=buildEnv(G.cols,G.rows,L*31+7,g.p.mask);applyTheme(L);G.mask=g.p.mask;G.track={x:G.cols/2+.65,z:G.rows/2+.65,door:env.doorZ};
   G.animals.forEach((a,i)=>{Object.assign(a,{id:i,off:0,state:'idle',v:0,bt:0,wig:0,sq:0,blinkT:1+a.seed*3,appear:-(a.r*.6+a.c*.4)*.045-.05,poof:0});
-    a.m=buildCritter(a.sp);a.m.root.position.copy(cellPos(a.c,a.r));a.m.root.rotation.y=Math.atan2(DX[a.dir],DZ[a.dir]);a.m.root.userData.animal=a;levelGroup.add(a.m.root);if(a.sleep){addNightcap(a.m,a.sp);a.zT=a.seed*2}});
+    a.m=buildCritter(a.sp);a.m.root.position.copy(cellPos(a.c,a.r));a.m.root.rotation.y=Math.atan2(DX[a.dir],DZ[a.dir]);a.m.root.userData.animal=a;levelGroup.add(a.m.root);if(a.sleep){addNightcap(a.m,a.sp,a.sleep>1);a.zT=a.seed*2}});
   G.obs.forEach(o=>{o.m=buildObstacle(o.v);o.m.root.position.copy(cellPos(o.c,o.r));o.m.root.rotation.y=(o.r*3+o.c)%4*.5;o.m.root.userData.obs=o;levelGroup.add(o.m.root)});
   {const cand=G.animals.filter(a=>!a.sleep);const ng=L<3?0:(G.tier==='hard'||G.tier==='super')?2:1;for(let i=0;i<ng&&cand.length;i++){const a=cand.splice(Math.random()*cand.length|0,1)[0];a.gold=true;addGold(a)}}
   G.balMode=false;$('bBal').classList.remove('on');balLabel();
   parts=[];floats=[];combo=0;hintA=null;emotes=[];capFly=[];party.on=false;party.list=[];$('left').style.opacity='';
   fitCamera();renderHUD();
-  const tips={1:'손가락이 가리키는 친구를 톡! 얼굴 쪽으로 나가요',2:'같은 방향으로 줄 선 친구들은 줄줄이 따라 나가요',3:'부딪히면 하트가 줄어요. 차근차근!',6:'바위와 건초더미는 움직이지 않아요',8:'잠꾸러기는 바로 옆 친구가 나가면 깨어나요'};
+  const tips={1:'손가락이 가리키는 친구를 톡! 얼굴 쪽으로 나가요',2:'같은 방향으로 줄 선 친구들은 줄줄이 따라 나가요',3:'부딪히면 하트가 줄어요. 차근차근!',6:'바위와 건초더미는 움직이지 않아요',8:'잠꾸러기는 바로 옆 친구가 나가면 깨어나요',21:'보라 모자 잠꾸러기는 옆 친구가 두 번 나가야 깨어나요'};
   setupHats();showBanner();bgmSong(G.tier==='easy'?'nap':G.tier==='normal'?'stroll':'chase');if(G.L<4||G.tier==='normal')SFX.start();
   if(tips[L]){$('tipTx').textContent=tips[L];$('tip').hidden=false;tipTimer=L===1?99:6}else $('tip').hidden=true;
   state='play';
@@ -1072,8 +1102,10 @@ function pathAt(P,d){d=clamp(d,0,P.len);let i=1;while(i<P.cum.length-1&&P.cum[i]
   return{p:a.clone().lerp(b,t),ang:Math.atan2(b.x-a.x,b.z-a.z)}}
 function startExit(a,delay){G.grid[a.r][a.c]=null;a.state='exit';a.v=2.5;a.sq=1;a.delay=delay;a.path=buildPath(a);a.pd=0;a.ang=a.m.root.rotation.y;a.face='joy';
   if(delay===0||Math.random()<.5)setTimeout(()=>emote(Math.random()<.75?'heart':'note',a.m.root,1.25,.9,.72),delay*1000);
-  for(const o of G.animals)if(o!==a&&o.state==='idle'&&Math.abs(o.c-a.c)+Math.abs(o.r-a.r)<=2){if(o.sleep){if(Math.abs(o.c-a.c)+Math.abs(o.r-a.r)===1)wake(o,delay)}else o.look={c:a.c,r:a.r,t:1.1+Math.random()*.4}}
+  for(const o of G.animals)if(o!==a&&o.state==='idle'&&Math.abs(o.c-a.c)+Math.abs(o.r-a.r)<=2){if(o.sleep){if(Math.abs(o.c-a.c)+Math.abs(o.r-a.r)===1)poke(o,delay)}else o.look={c:a.c,r:a.r,t:1.1+Math.random()*.4}}
   if(hintA===a)hintA=null}
+// deep sleepers (purple cap) need two friends next door to leave: the first one only stirs them
+function poke(o,delay=0){if(o.sleep>1){o.sleep--;setTimeout(()=>{o.wig=1;o.sq=1;SFX.snore&&SFX.snore();emote('z',o.m.root,1.35,1,.7);if(o.m.cap&&o.m.cap.userData.cone)o.m.cap.userData.cone.material=CAP_M},delay*1000+180);return}wake(o,delay)}
 function wake(o,delay=0){o.sleep=false;mis('wake');setTimeout(()=>{o.face='joy';o.faceT=.8;o.hopT=.5;o.sq=1;emote('!',o.m.root,1.35,.9,.7);SFX.wake();
   if(o.m.cap){const c=o.m.cap;c.userData.fly=1;capFly.push(c)}},delay*1000+180)}
 let capFly=[];
@@ -1113,7 +1145,7 @@ function onHit(a){
   const[hx,hy]=toScreen(animalWorld(a,.7).add(new THREE.Vector3(DX[a.dir]*.35,0,DZ[a.dir]*.35)));
   for(let i=0;i<9;i++){const an=i/9*Math.PI*2;parts.push({x:hx,y:hy,vx:Math.cos(an)*170,vy:Math.sin(an)*170,life:.4,max:.4,s:5,c:'#fff36b',t:'star'})}
   if(G.L===1){floats.push({x:hx,y:hy-20,txt:'괜찮아요! 연습이에요',life:1.1,max:1.1});return}
-  G.hearts--;G.mist++;renderHUD();
+  G.hearts--;G.mist++;renderHUD();$('hurt').animate([{opacity:0},{opacity:1,offset:.15},{opacity:0}],{duration:650,easing:'ease-out'});$('hearts').animate([{transform:'translateX(0)'},{transform:'translateX(-7px)'},{transform:'translateX(7px)'},{transform:'translateX(-4px)'},{transform:'translateX(0)'}],{duration:380});
   const hs=$('hearts').children[G.hearts];if(hs)hs.animate([{transform:'scale(1.6)'},{transform:'scale(.8)'}],{duration:350,easing:'ease-out'});
   floats.push({x:hx,y:hy-20,txt:'콩!',life:.75,max:.75,red:true});
   if(G.hearts<=0){G.done=true;setTimeout(()=>{SFX.fail();bgmDuck(.1,3.5);$('bCont').disabled=(save.coins||0)<30;$('bCont').querySelector('span').textContent=(save.coins||0)<30?`코인이 모자라요 (${save.coins||0}/30)`:'30개로 하트 받고 이어하기';show('ovFail')},900)}
@@ -1423,7 +1455,7 @@ function floatAway(a){G.balMode=false;$('bBal').classList.remove('on');$('tip').
   if(a.sleep)wake(a);G.grid[a.r][a.c]=null;a.state='float';a.ft=0;a.face='joy';a.faceT=9;
   const g=new THREE.Group();const cols=['#ff8fb1','#8fd3ff','#ffd34d','#b9a2ff','#7fdcc0'];const bm=new THREE.Mesh(BALLOON_G,M(cols[a.id%5],{roughness:.25}));bm.scale.set(1,1.15,1);bm.position.y=1.68;bm.castShadow=true;
   const st=new THREE.Mesh(STR_G,M('#8a6a5a'));st.position.y=1.12;g.add(bm,st);g.scale.setScalar(.01);a.m.root.add(g);a.m.balloon=g;
-  for(const o of G.animals)if(o!==a&&o.state==='idle'&&Math.abs(o.c-a.c)+Math.abs(o.r-a.r)===1&&o.sleep)wake(o,.6);
+  for(const o of G.animals)if(o!==a&&o.state==='idle'&&Math.abs(o.c-a.c)+Math.abs(o.r-a.r)===1&&o.sleep)poke(o,.6);
   SFX.hint();setTimeout(()=>SFX.voice(a.sp),120);emote('heart',a.m.root,1.25,1,.7);if(hintA===a)hintA=null;renderHUD()}
 // ---------- golden critters carry a coin ----------
 const GOLD_G=(()=>{const g=new THREE.CylinderGeometry(.25,.25,.07,28);g.rotateX(Math.PI/2);return g})(),GOLD_M=M('#ffcc33',{metalness:.55,roughness:.28,emissive:'#b87a00',emissiveIntensity:.35});
@@ -1478,7 +1510,7 @@ window.__render=async(kind,sec=8)=>{const keep={AC,master,REV,g:BGM.gain,song:BG
   for(let i=0;i<n;i++){v.setInt16(44+i*4,Math.max(-1,Math.min(1,L[i]))*32767,true);v.setInt16(46+i*4,Math.max(-1,Math.min(1,R[i]))*32767,true)}
   let bin='';const u=new Uint8Array(ab);for(let i=0;i<u.length;i+=32768)bin+=String.fromCharCode.apply(null,u.subarray(i,i+32768));
   return{peak:pk,rms:Math.sqrt(ss/n),wav:btoa(bin)}};
-window.__cam=camera;window.__game={buildCritter,scene,camRig:()=>({camBase,camTarget}),bgm:()=>({on:BGM.on,step:BGM.step,ac:AC&&AC.state}),get G(){return G},tapAnimal,startLevel,checkFree,genLevel,solvable,params,info:()=>({calls:renderer.info.render.calls,tris:renderer.info.render.triangles,geos:renderer.info.memory.geometries})};
+window.__cam=camera;window.__game={analyze,buildCritter,scene,camRig:()=>({camBase,camTarget}),bgm:()=>({on:BGM.on,step:BGM.step,ac:AC&&AC.state}),get G(){return G},tapAnimal,startLevel,checkFree,genLevel,solvable,params,info:()=>({calls:renderer.info.render.calls,tris:renderer.info.render.triangles,geos:renderer.info.memory.geometries})};
 })();
 </script>
 </body>
