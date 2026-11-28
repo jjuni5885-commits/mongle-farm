@@ -556,6 +556,11 @@ function critterParts(sp){if(critCache[sp])return critCache[sp];const t=buildCri
     if(which==='skip')return;const base=which==='body'?mi:which==='head'?hi:ei;
     (which==='body'?body:which==='head'?head:eye).push({geo:o.geometry,color:o.material.color.clone(),m:new THREE.Matrix4().multiplyMatrices(base,o.matrixWorld)})});
   return critCache[sp]={body:shadeRear(merge(body)),head:merge(head),eye:merge(eye).scale(1.16,1.16,1.16),headPos:t.head.position.clone(),eyePos:t.eyes.map(e=>e.position.clone())}}
+const MARK_G=(()=>{const s=new THREE.Shape();const w=.19,h=.17,r=.05;
+  s.moveTo(0,h);s.quadraticCurveTo(r*.4,h-r*.2,w,-h*.35);s.quadraticCurveTo(w+r*.4,-h*.75,w-r*1.2,-h*.8);s.quadraticCurveTo(0,-h*.35,-w+r*1.2,-h*.8);s.quadraticCurveTo(-w-r*.4,-h*.75,-w,-h*.35);s.quadraticCurveTo(-r*.4,h-r*.2,0,h);
+  const g=new THREE.ShapeGeometry(s,10);g.rotateX(-Math.PI/2);g.scale(1,1,-1);g.computeVertexNormals();return g})();
+const MARK_W=new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.95,depthWrite:false,side:THREE.DoubleSide});
+const markCache={};const markMat=sp=>markCache[sp]||(markCache[sp]=new THREE.MeshBasicMaterial({color:SPEC[sp].arrow,transparent:true,opacity:.95,depthWrite:false,side:THREE.DoubleSide}));
 function buildCritter(sp){const P=critterParts(sp);
   const root=new THREE.Group(),bob=new THREE.Group();root.add(bob);const model=new THREE.Group();model.scale.setScalar(.95);bob.add(model);
   const body=new THREE.Mesh(P.body,CRIT_M);body.castShadow=true;model.add(body);
@@ -563,7 +568,10 @@ function buildCritter(sp){const P=critterParts(sp);
   const eyes=P.eyePos.map(q=>{const e=new THREE.Mesh(P.eye,EYE_M);e.position.copy(q);head.add(e);return e});
   const ring=new THREE.Mesh(RING_G,new THREE.MeshBasicMaterial({color:'#fff36b',transparent:true,opacity:0,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;root.add(ring);
   const blob=new THREE.Mesh(BLOB_G,BLOB_M);blob.scale.set(.95,1,1.1);blob.position.y=.02;root.add(blob);
-  return {root,bob,head,eyes,ring,blob,P};
+  // ground marker in front of the feet: a soft rounded arrow in the critter's collar colour
+  const mk=new THREE.Group();mk.position.set(0,.8,-.1);mk.rotation.x=.1;model.add(mk);
+  const o=new THREE.Mesh(MARK_G,MARK_W);o.scale.setScalar(1.28);o.position.y=-.002;o.renderOrder=1;const iM=new THREE.Mesh(MARK_G,markMat(sp));iM.renderOrder=2;mk.add(o,iM);
+  return {root,bob,head,eyes,ring,blob,P,mark:mk};
 }
 // little striped nightcap with a pompom, for sleepy friends
 const CAP_G=(()=>{const g=new THREE.ConeGeometry(.21,.5,18,4,false);g.translate(0,.25,0);return g})();
@@ -1154,6 +1162,7 @@ function update(dt){
     m.bob.scale.set(sx*s,sy*s,sz*s);
     m.bob.rotation.z=Math.sin(time*40)*a.wig*.18;
     m.ring.material.opacity=hintA===a?.55+.35*Math.sin(time*10):0;
+    if(m.mark){m.mark.visible=(a.state==='idle'||a.state==='bump')&&a.appear>=1;if(m.mark.visible){const ph=Math.max(0,Math.sin(time*3+a.seed*6));m.mark.position.z=-.1+ph*.05;m.mark.position.y=.8+ph*.03}}
     m.bob.position.y=hintA===a?Math.abs(Math.sin(time*7))*.15:0;
     m.blob.position.y=.02-m.root.position.y;m.blob.material.opacity=1;
   }
@@ -1243,7 +1252,7 @@ const party={on:false,k:0,list:[],home:null};
 function startParty(){
   const door=G.track.door,seen=[...new Set(G.animals.map(a=>a.sp))];const n=7,list=[];
   const order=[3,2,4,1,5,0,6];
-  for(let i=0;i<n;i++){const sp=seen[i%seen.length];const m=buildCritter(sp);const t=i-(n-1)/2;
+  for(let i=0;i<n;i++){const sp=seen[i%seen.length];const m=buildCritter(sp);m.mark.visible=false;const t=i-(n-1)/2;
     m.root.position.set(0,0,door);m.bob.scale.setScalar(.001);levelGroup.add(m.root);
     list.push({m,sp,x:t*.86,z:door+2.05-t*t*.06,delay:order.indexOf(i)*.16+.15,t:0,ph:i*.9,landed:false})}
   $('left').style.opacity=0;party.on=true;party.k=0;party.list=list;party.home={b:camBase.clone(),t:camTarget.clone()};
