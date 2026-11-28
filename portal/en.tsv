@@ -1,0 +1,162 @@
+0	Couldn't load the 3D engine. Please refresh the page
+1	Progress loaded! Continue from level {0}
+2	No Hat
+3	Sprout
+4	Flower Crown
+5	Party Hat
+6	Ribbon
+7	Straw Hat
+8	Crown
+9	Frog Hat
+10	Chef Hat
+11	Wearing
+12	Wear
+13	Spring Flowers
+14	Autumn Woods
+15	Mint Lake
+16	Snowflake Hill
+17	Cotton Candy Field
+18	Mongle Farm
+19	Hat Shop
+20	New hats in!
+21	Invite Friends
+22	Share for +30 coins
+23	Ad Inquiries
+24	This spot is empty
+25	Daily Missions
+26	Clear them for lots of coins
+27	Breather Level
+28	Normal
+29	Tricky Level!
+30	Hardest Level!
+32	Welcome to a new land!
+33	Take a little breather
+34	Take your time and think
+35	So many friends! You can bump 3 times
+36	Tap the friend the finger points to! They exit the way they face
+37	Friends lined up facing the same way follow each other out
+38	Bumping costs a heart. Take it step by step!
+39	Rocks and hay bales never move
+40	Sleepyheads wake up when a friend right next to them leaves
+41	Purple-cap sleepyheads need two friends next to them to leave
+42	Level
+43	Friends left
+44	Zzz…
+45	Chain x
+46	Nice!
+47	Great!
+48	Awesome!
+49	Amazing!
+50	Perfect!
+51	It's okay! Just practice
+52	Bonk!
+53	Continue to keep your {0}-clear streak
+54	Not enough coins ({0}/30)
+55	30 coins for a heart to continue
+59	First clear: double!
+60	Perfect! Not a single bump
+61	Well done! Almost perfect
+62	Cleared! Go for 3 stars next time
+63	Level {0} escape complete!
+64	You've cleared all {0} levels! A new farm opens soon
+69	{0} more stars to the Star Chest
+71	Very Hard
+72	Hard
+73	Sound On
+74	Sound Off
+75	Music On
+76	Music Off
+78	Claim gift +{0}
+79	See you tomorrow
+80	Day {0} in a row! A big gift on day 7
+81	Visit every day for bigger and bigger gifts
+84	Mongle Farm Escape
+85	Couldn't share
+86	Link copied!
+87	Thanks for sharing!
+88	Coins +{0}
+89	Link copied. You can get the share reward again tomorrow
+90	Thanks for sharing! You can get the reward again tomorrow
+91	Clear 3 levels
+92	Clear 2 levels with 3 stars
+93	Free 50 friends
+94	Chain 4+ friends out 3 times
+95	Free 3 golden coin friends
+96	Wake 4 sleepyheads
+97	Clear 1 tricky level
+98	Use the balloon item once
+101	Open
+103	Claimed
+104	Claim
+106	A balloon costs {0} coins. Missions give balloons too
+107	Bought a balloon for {0} coins
+108	Tap a friend to tie a balloon! It floats away even when blocked
+109	Golden coin +
+110	Bunny
+111	Chick
+112	Calf
+113	Kitty
+114	Frog
+115	Teddy
+116	Puppy
+117	Hamster
+120	Not met yet
+122	{0}s…
+123	Claim gift
+124	Close
+146	Level 1
+147	Friends left 0
+148	Opening the farm gate
+149	Tap a friend whose face points to an open path!
+150	Play
+151	Friend Book
+152	Farm Map
+159	Mongle Farm Map
+160	Back
+161	Free more friends to fill the book and earn gifts
+172	Daily Gift
+173	Buy a hat and every friend wears it
+176	Farm escape complete!
+177	All the friends made it out to the meadow
+178	Next Level
+179	Play Again
+181	Oops, no hearts left
+182	The friends bumped into each other too much.
+183	Watch the order and try again?
+185	Try Again
+186	Menu
+187	Game board
+188	Hearts left
+189	Hint
+190	Menu
+191	Balloon item
+192	Daily gift
+K	{0}장 {s}	Ch. {0} {s}
+K	🔥 연속 클리어 {0}번! 보너스 +{1}	🔥 {0}-clear streak! Bonus +{1}
+K	🔥 연속 클리어 {0}번! 보너스 +{1} · 풍선 +1	🔥 {0}-clear streak! Bonus +{1}, balloon +1
+K	황금 코인 +{0} 획득!	Golden coins +{0}!
+K	미션 {0}개 완료!	{0} missions done!
+K	메뉴의 미션에서 보상을 받아요	Claim rewards in the menu's Missions
+K	미션: {s} ({0}/{1})	Mission: {s} ({0}/{1})
+K	별 보물상자를 열 수 있어요!	You can open the Star Chest!
+K	별 보물상자	Star Chest
+K	(별 {0}/{1})	(Stars {0}/{1})
+K	{0}일째	Day {0}
+K	미션 3개 모두 완료 보너스	Bonus for all 3 missions
+K	매일 새 미션이 와요	New missions every day
+K	{0}/{1}마리 탈출	{0}/{1} freed
+K	{0}마리 탈출 · 도감 완성!	{0} freed, book complete!
+K	{s} 도감 선물! 코인 +{0}	{s} book gift! Coins +{0}
+K	미션 완료! "{s}" 보상을 받으러 가요	Mission complete! Go claim "{s}"
+K	레벨 {0}	Level {0}
+K	남은 친구 {0}	Friends left {0}
+K	줄줄이 x{0}	Chain x{0}
+K	황금 코인 +{0}	Golden coin +{0}
+K	코인 +{0}	Coins +{0}
+K	링크를 복사했어요! 코인 +{0}	Link copied! Coins +{0}
+K	공유 고마워요! 코인 +{0}	Thanks for sharing! Coins +{0}
+K	받기 {0}	Claim {0}
+K	{s} x{0}	{s} x{0}
+K	줄줄이 x{0}!	Chain x{0}!
+K	황금 코인	Golden coins
+K	획득!	earned!
