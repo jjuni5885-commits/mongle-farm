@@ -1,0 +1,8 @@
+{
+  "appId": "com.monglefarm.escape",
+  "appName": "몽글 목장 대탈출",
+  "webDir": "www",
+  "backgroundColor": "#8fd46bff",
+  "android": { "allowMixedContent": false },
+  "ios": { "contentInset": "never" }
+}

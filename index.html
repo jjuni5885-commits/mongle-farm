@@ -1555,8 +1555,9 @@ const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNative
 const IOS_APP=NATIVE&&Capacitor.getPlatform&&Capacitor.getPlatform()==='ios';
 // Google sample ad units (safe for testing). Replace with your own AdMob unit ids before release.
 const AD_IDS=IOS_APP?{reward:'ca-app-pub-3940256099942544/1712485313',inter:'ca-app-pub-3940256099942544/4411468910'}:{reward:'ca-app-pub-3940256099942544/5224354917',inter:'ca-app-pub-3940256099942544/1033173712'};
+const AD_TEST=true; // set false for the store release, after your own AdMob ids are in
 const ADMOB=()=>NATIVE&&Capacitor.Plugins&&Capacitor.Plugins.AdMob;
-if(ADMOB())try{ADMOB().initialize({initializeForTesting:true})}catch(e){}
+if(ADMOB())try{ADMOB().initialize({initializeForTesting:AD_TEST})}catch(e){}
 let adCb=null,adTimer=0;
 function testAd(title,sec,reward,cb){$('adT').textContent=title;const b=$('bAdDone');b.disabled=true;b.textContent=`${sec}초…`;$('adBar').style.width='0';$('ovAd').hidden=false;bgmDuck(.05,sec+1);
   const t0=performance.now();clearInterval(adTimer);adTimer=setInterval(()=>{const k=Math.min(1,(performance.now()-t0)/(sec*1000));$('adBar').style.width=(k*100)+'%';
@@ -1564,12 +1565,12 @@ function testAd(title,sec,reward,cb){$('adT').textContent=title;const b=$('bAdDo
 $('bAdDone').onclick=()=>{SFX.ui();$('ovAd').hidden=true;bgmDuck(.5,.1);const f=adCb;adCb=null;f&&f()};
 const ADS={
   rewarded(title,cb){audio();const A=ADMOB();
-    if(A){A.prepareRewardVideoAd({adId:AD_IDS.reward,isTesting:true}).then(()=>A.showRewardVideoAd()).then(()=>cb()).catch(()=>toast('광고를 불러오지 못했어요. 잠시 뒤에 다시 해 주세요'));return}
+    if(A){A.prepareRewardVideoAd({adId:AD_IDS.reward,isTesting:AD_TEST}).then(()=>A.showRewardVideoAd()).then(()=>cb()).catch(()=>toast('광고를 불러오지 못했어요. 잠시 뒤에 다시 해 주세요'));return}
     testAd(title,5,true,cb)},
   // between levels, never in the first 20 levels, at most every 3 clears, never after buying "no ads"
   inter(cb){save.adCnt=(save.adCnt||0)+1;persist();
     if(save.noAds||!G||G.L<20||save.adCnt<3)return cb();save.adCnt=0;persist();const A=ADMOB();
-    if(A){A.prepareInterstitial({adId:AD_IDS.inter,isTesting:true}).then(()=>A.showInterstitial()).catch(()=>{}).finally(cb);return}
+    if(A){A.prepareInterstitial({adId:AD_IDS.inter,isTesting:AD_TEST}).then(()=>A.showInterstitial()).catch(()=>{}).finally(cb);return}
     testAd('잠깐 광고',3,false,cb)}};
 // rewarded: one more heart
 $('bAdHeart').onclick=()=>{if(!G)return;ADS.rewarded('광고 보고 하트 받기',()=>{SFX.coin();show(null);G.hearts=1;G.done=false;renderHUD();
@@ -1588,6 +1589,12 @@ function grantIAP(id){if(id==='noads')save.noAds=1;if(id==='coins600'){save.coin
 $('iapGrid').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;audio();const id=b.dataset.p;if(id==='noads'&&save.noAds)return;
   const S=window.CdvPurchase&&CdvPurchase.store;if(NATIVE&&S){const o=S.get(id);if(o&&o.getOffer())o.getOffer().order();else toast('스토어에 연결하지 못했어요');return}
   SFX.boing();toast('구매는 앱스토어 출시 후 열려요 (지금은 테스트 버전)')});
+// store billing in the app build (cordova-plugin-purchase v13). Product ids must match Play Console / App Store Connect.
+if(NATIVE)document.addEventListener('deviceready',()=>{const C=window.CdvPurchase;if(!C)return;const S=C.store,PL=IOS_APP?C.Platform.APPLE_APPSTORE:C.Platform.GOOGLE_PLAY;
+  S.register([{id:'noads',type:C.ProductType.NON_CONSUMABLE,platform:PL},{id:'coins600',type:C.ProductType.CONSUMABLE,platform:PL},{id:'coins2000',type:C.ProductType.CONSUMABLE,platform:PL}]);
+  S.when().approved(t=>{(t.products||[]).forEach(p=>grantIAP(p.id));t.finish()});
+  S.when().productUpdated(()=>{try{IAP.forEach(p=>{const q=S.get(p.id);if(q&&q.pricing)p.price=q.pricing.price});if(!$('ovShop').hidden)buildShop()}catch(e){}});
+  S.initialize([PL]).then(()=>{const q=S.get('noads');if(q&&q.owned){save.noAds=1;persist()}})},false);
 // ---------- progress transfer UI ----------
 if(IN_KAKAO)$('kakaoNote').hidden=false;
 $('bKakaoOut').onclick=()=>{audio();SFX.ui();openOutside()};

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">몽글 목장 대탈출</string>
+    <string name="title_activity_main">몽글 목장 대탈출</string>
+    <string name="package_name">com.monglefarm.escape</string>
+    <string name="custom_url_scheme">com.monglefarm.escape</string>
+</resources>
