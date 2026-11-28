@@ -189,6 +189,13 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 .iap{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px}
 .iap button{border:none;border-radius:16px;background:linear-gradient(#fff,#fff6e0);font-family:var(--font);color:var(--ink);padding:8px 2px;display:grid;justify-items:center;gap:2px;box-shadow:0 3px 0 #ead7a8;cursor:pointer;font-size:14px}
 .iap button em{font-style:normal;background:#ff7fa8;color:#fff;border-radius:10px;padding:1px 8px;font-size:13px}.iap button.own{opacity:.55}
+.row.two .btn.c{font-size:17px;padding:11px 4px;margin-bottom:0}.row.two{margin-bottom:10px}
+.btn.c.bk{background:#7fc8ff;box-shadow:0 5px 0 #4f98d6;position:relative}.btn.c.bk i{position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:#ff4d6d;border:2px solid #fff}
+#ovBook{z-index:6}.book{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:4px 0 10px}
+.bk1{background:#fff;border-radius:16px;padding:6px 8px 8px;box-shadow:0 3px 0 #e8dcc4;display:grid;justify-items:center;gap:2px;font-size:15px}
+.bk1 img,.bk1 .ph{width:78px;height:78px}.bk1 .ph{display:grid;place-items:center;font-size:40px;color:#d9c9ad}.bk1.no{opacity:.6}.bk1 .bar{width:100%;height:8px;border-radius:5px;background:#f0e4cc;overflow:hidden}.bk1 .bar i{display:block;height:100%;background:linear-gradient(90deg,#7fc8ff,#b28bff)}
+.bk1 small{font-size:12px;opacity:.7}.bk1 .claim{margin-top:2px}
+.streak{display:inline-flex;align-items:center;gap:4px;background:#fff0d6;color:#d9731a;border-radius:12px;padding:2px 10px;font-size:15px;margin:-4px 0 6px}
 .shopH{font-size:16px;margin:4px 0 6px;color:#a0705a}
 #ovMove{z-index:6}.card p.mvP{font-size:15px;word-break:keep-all;margin-bottom:6px}.card p.mvS{font-size:13px;opacity:.75;margin:6px 0 12px;word-break:keep-all}
 .mvRow{display:flex;gap:8px;align-items:stretch}.mvRow input{flex:1;min-width:0;border:2px solid #e8dcc4;border-radius:14px;padding:0 12px;font-family:var(--font);font-size:15px;color:var(--ink);background:#fff}
@@ -227,7 +234,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <div class="coinPill" id="titleCoin"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><b id="titleCoinN">0</b></div>
     <h1 class="title">몽글 목장 대탈출<small>얼굴이 향한 쪽이 뚫린 친구를 톡!</small></h1>
     <button class="btn" id="bPlay">시작하기</button>
-    <button class="btn c" id="bShop"><svg class="coin hatI" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><span>모자 가게</span></button>
+    <div class="row two"><button class="btn c" id="bShop"><svg class="coin hatI" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><span>모자 가게</span></button><button class="btn c bk" id="bBook"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M3 5.5c3-1.5 6-1.5 9 .5v14c-3-2-6-2-9-.5z" fill="#fff6e8"/><path d="M21 5.5c-3-1.5-6-1.5-9 .5v14c3-2 6-2 9-.5z" fill="#ffe0ea"/><circle cx="16.5" cy="11" r="2.4" fill="#ff8fb1"/></svg><span>친구 도감</span><i id="bookDot" hidden></i></button></div>
     <div class="row">
       <button class="btn y" id="bLevels">목장 지도</button>
       <button class="btn y" id="bSound">소리 켜짐</button>
@@ -253,6 +260,14 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <div class="chest" id="chest"></div>
     <div id="misList"></div>
     <button class="btn y" id="bMisBack" style="margin-top:4px">닫기</button>
+  </div>
+</div>
+<div class="ov" id="ovBook" hidden>
+  <div class="card">
+    <h2>친구 도감</h2>
+    <p style="margin:0 0 6px;font-size:14px">친구를 탈출시킬수록 도감이 채워지고 선물을 받아요</p>
+    <div class="book" id="bookGrid"></div>
+    <button class="btn y" id="bBookBack">닫기</button>
   </div>
 </div>
 <div class="ov" id="ovAd" hidden>
@@ -300,6 +315,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <div class="stars" id="winStars"></div>
     <p id="winP">친구들이 모두 풀밭으로 나갔어요</p>
     <div class="coinGain" id="winCoin"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><b id="winCoinN">+0</b><small id="winCoinT"></small></div>
+    <div class="streak" id="winStreak" hidden></div>
     <div class="winMis" id="winMis"></div>
     <button class="btn ad" id="bAdDouble"><svg viewBox="0 0 24 24" width="22" height="22"><rect x="2.5" y="5" width="19" height="13" rx="3" fill="#fff"/><path d="M10 8.6v6l5-3z" fill="#7a5cff"/><path d="M8 21h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg><span>광고 보고 코인 2배</span></button>
     <button class="btn" id="bNext">다음 레벨</button>
@@ -311,6 +327,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
   <div class="card">
     <h2>앗, 하트가 없어요</h2>
     <p>친구들이 너무 많이 부딪혔어요.<br>순서를 잘 보고 다시 해 볼까요?</p>
+    <div class="streak" id="failStreak" hidden></div>
     <button class="btn c" id="bCont"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><span>30개로 하트 받고 이어하기</span></button>
     <button class="btn ad" id="bAdHeart"><svg viewBox="0 0 24 24" width="22" height="22"><rect x="2.5" y="5" width="19" height="13" rx="3" fill="#fff"/><path d="M10 8.6v6l5-3z" fill="#7a5cff"/><path d="M8 21h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg><span>광고 보고 하트 받고 이어하기</span></button>
     <button class="btn" id="bRetry">다시 도전</button>
@@ -1192,7 +1209,7 @@ function onHit(a){
   G.hearts--;G.mist++;renderHUD();$('hurt').animate([{opacity:0},{opacity:1,offset:.15},{opacity:0}],{duration:650,easing:'ease-out'});$('hearts').animate([{transform:'translateX(0)'},{transform:'translateX(-7px)'},{transform:'translateX(7px)'},{transform:'translateX(-4px)'},{transform:'translateX(0)'}],{duration:380});
   const hs=$('hearts').children[G.hearts];if(hs)hs.animate([{transform:'scale(1.6)'},{transform:'scale(.8)'}],{duration:350,easing:'ease-out'});
   floats.push({x:hx,y:hy-20,txt:'콩!',life:.75,max:.75,red:true});
-  if(G.hearts<=0){G.done=true;setTimeout(()=>{SFX.fail();bgmDuck(.1,3.5);$('bCont').disabled=(save.coins||0)<30;$('bCont').querySelector('span').textContent=(save.coins||0)<30?`코인이 모자라요 (${save.coins||0}/30)`:'30개로 하트 받고 이어하기';show('ovFail')},900)}
+  if(G.hearts<=0){G.done=true;setTimeout(()=>{{const e=$('failStreak'),k=save.streak||0;e.hidden=k<2;e.textContent=`이어하면 연속 클리어 ${k}번이 지켜져요`}SFX.fail();bgmDuck(.1,3.5);$('bCont').disabled=(save.coins||0)<30;$('bCont').querySelector('span').textContent=(save.coins||0)<30?`코인이 모자라요 (${save.coins||0}/30)`:'30개로 하트 받고 이어하기';show('ovFail')},900)}
 }
 
 // picking
@@ -1327,13 +1344,15 @@ let last=performance.now();
 function loop(now){const rdt=(now-last)/1000,dt=Math.min(.05,rdt);last=now;tuneQuality(Math.min(rdt,.2));update(dt);renderer.render(scene,camera);drawFx();requestAnimationFrame(loop)}
 
 // ---------- flow ----------
-function show(id){try{shareLabel()}catch(e){}if(id==='ovShop'){['ovTitle','ovLevels','ovWin','ovFail'].forEach(k=>$(k).hidden=true);$('ovShop').hidden=false;state='menu';return}$('ovShop').hidden=true;if(id==='ovTitle'){bgmSong('nap');try{misBadge()}catch(e){}$('titleCoinN').textContent=save.coins||0}['ovTitle','ovLevels','ovWin','ovFail'].forEach(k=>$(k).hidden=k!==id);state=id?'menu':'play'}
+function show(id){try{shareLabel()}catch(e){}if(id==='ovShop'){['ovTitle','ovLevels','ovWin','ovFail'].forEach(k=>$(k).hidden=true);$('ovShop').hidden=false;state='menu';return}$('ovShop').hidden=true;if(id==='ovTitle'){bgmSong('nap');try{misBadge();bookBadge()}catch(e){}$('titleCoinN').textContent=save.coins||0}['ovTitle','ovLevels','ovWin','ovFail'].forEach(k=>$(k).hidden=k!==id);state=id?'menu':'play'}
 function countUp(el,n){const t0=performance.now();const f=()=>{const k=Math.min(1,(performance.now()-t0)/700);el.textContent='+'+Math.round(n*k);if(k<1)requestAnimationFrame(f);else{SFX.coin&&SFX.coin()}};f();let i=0;const iv=setInterval(()=>{if(++i>6)clearInterval(iv);else SFX.tick&&SFX.tick(i)},100)}
 function win(){
   const st=Math.max(1,3-G.mist),L=G.L;
   save.stars[L]=Math.max(save.stars[L]||0,st);save.max=Math.min(MAX_L,Math.max(save.max,L+1));if(L>=MAX_L)save.allDone=1;persist();
   mis('clear');if(st===3)mis('star3');if(G.tier==='hard'||G.tier==='super')mis('hard');
-  startParty();bgmDuck(.12,4.5);setTimeout(()=>SFX.stars(st),2000);
+  startParty();bgmDuck(.12,4.5);
+  {save.streak=(save.streak||0)+1;const k=save.streak,sb=Math.min(k-1,5)*2;if(sb)save.coins=(save.coins||0)+sb;let extra='';if(k%5===0){save.balloons=(save.balloons??3)+1;extra=' · 풍선 +1'}persist();
+   const e=$('winStreak');e.hidden=k<2;e.innerHTML=`🔥 연속 클리어 ${k}번! 보너스 +${sb}${extra}`}setTimeout(()=>SFX.stars(st),2000);
   // coins: base + stars + tier bonus, first clear pays double
   const first=!G.cleared0,gain=(5+st*5+({hard:10,super:20}[G.tier]||0))*(first?2:1);save.coins=(save.coins||0)+gain;persist();G.gain=gain;G.doubled=false;$('bAdDouble').disabled=false;$('bAdDouble').querySelector('span').textContent=`광고 보고 코인 2배 (+${gain})`;
   $('winCoinN').textContent='+0';$('winCoinT').textContent=first?'첫 클리어 2배!':'';setTimeout(()=>countUp($('winCoinN'),gain),2300);
@@ -1506,10 +1525,30 @@ const GOLD_G=(()=>{const g=new THREE.CylinderGeometry(.25,.25,.07,28);g.rotateX(
 const GOLD_IN=M('#fff0a0',{metalness:.3,roughness:.3,emissive:'#d9a000',emissiveIntensity:.3});
 function addGold(a){const g=new THREE.Group();const c=new THREE.Mesh(GOLD_G,GOLD_M);const s=new THREE.Mesh(new THREE.CircleGeometry(.15,5),GOLD_IN);s.position.z=.037;s.rotation.z=Math.PI/2;const s2=s.clone();s2.position.z=-.037;s2.rotation.y=Math.PI;c.add(s,s2);g.add(c);g.position.y=1.3;a.m.root.add(g);a.m.gold=g;c.castShadow=true;const h=new THREE.Mesh(BLOB_G,GOLD_HALO);h.scale.setScalar(1.25);h.position.y=-1.27;h.renderOrder=1;g.add(h);a.m.halo=h}
 const GOLD_HALO=new THREE.MeshBasicMaterial({map:blobTex,color:'#ffd34d',transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.9});
-function onGone(a){if(!a.gold)return;a.gold=false;const n=5;save.coins=(save.coins||0)+n;persist();G.goldGot=(G.goldGot||0)+n;mis('gold');
+function onGone(a){save.res=save.res||{};save.res[a.sp]=(save.res[a.sp]||0)+1;if(!a.gold)return;a.gold=false;const n=5;save.coins=(save.coins||0)+n;persist();G.goldGot=(G.goldGot||0)+n;mis('gold');
   const[ex,ey]=toScreen(new THREE.Vector3(0,1.6,G.track?G.track.door:0));floats.push({x:clamp(ex,90,innerWidth-90),y:ey-10,txt:'황금 코인 +'+n,life:1.2,max:1.2});SFX.coin&&SFX.coin();
   for(let i=0;i<10;i++){const an=i/10*Math.PI*2;parts.push({x:ex,y:ey,vx:Math.cos(an)*150,vy:Math.sin(an)*150-40,life:.6,max:.6,s:6,c:'#ffd34d',t:'star'})}}
 misToday();misBadge();balLabel();
+// ---------- friend collection: rescue counts unlock portraits and coin gifts ----------
+const SP_NAME={bunny:'토끼',chick:'병아리',cow:'송아지',cat:'고양이',frog:'개구리',bear:'곰돌이',puppy:'강아지',hamster:'햄스터'};
+const BOOK_GOALS=[10,50,150,400],BOOK_REW=[20,40,80,150];
+let portR=null;const PORT={};
+function portrait(sp){if(PORT[sp])return PORT[sp];try{if(!portR){portR=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});portR.setSize(156,156);portR.outputEncoding=THREE.sRGBEncoding}
+  const sc=new THREE.Scene();sc.add(new THREE.HemisphereLight('#ffffff','#b8a080',1.1));const dl=new THREE.DirectionalLight('#fff4e0',.9);dl.position.set(2,4,5);sc.add(dl);
+  const m=buildCritter(sp);m.root.rotation.y=.22;sc.add(m.root);const cam=new THREE.PerspectiveCamera(30,1,.1,20);cam.position.set(0,1.3,2.95);cam.lookAt(0,.5,0);
+  portR.render(sc,cam);return PORT[sp]=portR.domElement.toDataURL()}catch(e){return ''}}
+function bookTier(sp){const n=(save.res||{})[sp]||0,got=(save.bookGot||{})[sp]||0;return{n,got,goal:BOOK_GOALS[got],ready:got<BOOK_GOALS.length&&n>=BOOK_GOALS[got]}}
+function bookBadge(){const any=SP_KEYS.some(sp=>bookTier(sp).ready);$('bookDot').hidden=!any}
+function buildBook(){$('bookGrid').innerHTML=SP_KEYS.map(sp=>{const t=bookTier(sp),seen=t.n>0;const goal=t.goal,lv=t.got;
+  const pic=seen?`<img alt="" src="${portrait(sp)}">`:'<div class="ph">?</div>';
+  const bar=goal?`<div class="bar"><i style="width:${Math.min(100,t.n/goal*100)}%"></i></div><small>${t.n}/${goal}마리 탈출</small>`:`<small>${t.n}마리 탈출 · 도감 완성!</small>`;
+  const btn=goal?`<button class="claim${t.ready?' ok':''}" data-sp="${sp}">${t.ready?'받기 ':''}<svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/></svg>${BOOK_REW[lv]}</button>`:'';
+  return`<div class="bk1${seen?'':' no'}">${pic}<b>${seen?SP_NAME[sp]:'아직 못 만났어요'}${seen?' '+'★'.repeat(lv):''}</b>${bar}${btn}</div>`}).join('');bookBadge()}
+$('bBook').onclick=()=>{audio();SFX.ui();buildBook();$('ovBook').hidden=false};
+$('bBookBack').onclick=()=>{SFX.ui();$('ovBook').hidden=true};
+$('bookGrid').addEventListener('click',e=>{const b=e.target.closest('.claim');if(!b)return;const sp=b.dataset.sp,t=bookTier(sp);if(!t.ready){SFX.boing();return}
+  save.bookGot=save.bookGot||{};const r=BOOK_REW[t.got];save.bookGot[sp]=t.got+1;save.coins=(save.coins||0)+r;persist();SFX.coin();SFX.win&&SFX.win();toast(`${SP_NAME[sp]} 도감 선물! 코인 +${r}`);buildBook();$('titleCoinN').textContent=save.coins});
+try{bookBadge()}catch(e){}
 // ---------- ads & purchases ----------
 // Web build: friendly test ads, purchases disabled. Native app (Capacitor): AdMob + store billing plugins take over.
 const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
@@ -1565,8 +1604,8 @@ $('shopGrid').addEventListener('click',e=>{const b=e.target.closest('.hat');if(!
   persist();buildShop();$('titleCoinN').textContent=save.coins||0});
 $('bCont').onclick=()=>{if((save.coins||0)<30||!G)return;save.coins-=30;persist();SFX.coin();show(null);G.hearts=1;G.done=false;renderHUD();
   const hs=$('hearts').children[0];if(hs)hs.animate([{transform:'scale(.2)'},{transform:'scale(1.5)'},{transform:'scale(1)'}],{duration:500,easing:'ease-out'});bgmDuck(.5,.1)};
-$('bRetry').onclick=()=>{SFX.ui();show(null);startLevel(G.L)};
-$('bFailMenu').onclick=()=>{SFX.ui();show('ovTitle')};
+$('bRetry').onclick=()=>{SFX.ui();save.streak=0;persist();show(null);startLevel(G.L)};
+$('bFailMenu').onclick=()=>{SFX.ui();save.streak=0;persist();show('ovTitle')};
 $('bRe').onclick=()=>{if(state!=='play')return;audio();SFX.ui();startLevel(G.L)};
 $('bMenu').onclick=()=>{audio();SFX.ui();show('ovTitle')};
 $('bHint').onclick=()=>{if(state!=='play'||!G||G.done)return;audio();SFX.hint();
