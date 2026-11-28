@@ -179,6 +179,17 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
 @media (max-width:390px){.hud{gap:6px}.hud .pill{padding:5px 10px;font-size:16px}.hearts svg{width:20px;height:20px}.ibtn{width:40px;height:40px}}
 .lnk{display:block;margin:14px auto 0;border:none;background:none;font-family:var(--font);font-size:14px;color:#8a7060;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .kakaoNote{margin-top:12px;background:#fff3b0;border-radius:16px;padding:10px 12px 12px;font-size:14px;color:#6a5040;box-shadow:inset 0 0 0 2px #ffe066}.kakaoNote .btn{font-size:16px;padding:10px;margin-top:8px;background:#3a2a1a;box-shadow:0 4px 0 #1a120a;color:#ffe066}
+#ovAd{z-index:8;background:rgba(40,30,60,.55)}
+.adBox{position:relative;border-radius:18px;height:190px;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,#ffd6e7,#d9ccff 55%,#c9f0ff);margin:6px 0 10px;box-shadow:inset 0 0 0 3px #fff}
+.adBox b{font-size:22px;color:#6a4aa8}.adBox small{display:block;font-size:13px;opacity:.7;margin-top:4px}
+.adTag{position:absolute;left:10px;top:8px;background:#fff;border-radius:8px;padding:1px 8px;font-size:12px;color:#8a7aa8}
+.adBar{height:8px;border-radius:6px;background:#eee3f8;overflow:hidden;margin-bottom:6px}.adBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#b28bff,#ff8fb8)}
+.btn.ad{display:flex;align-items:center;justify-content:center;gap:8px;background:#7a5cff;box-shadow:0 5px 0 #5638d6;font-size:18px;margin-bottom:10px}
+.btn.ad:disabled{filter:grayscale(.8);opacity:.55}
+.iap{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px}
+.iap button{border:none;border-radius:16px;background:linear-gradient(#fff,#fff6e0);font-family:var(--font);color:var(--ink);padding:8px 2px;display:grid;justify-items:center;gap:2px;box-shadow:0 3px 0 #ead7a8;cursor:pointer;font-size:14px}
+.iap button em{font-style:normal;background:#ff7fa8;color:#fff;border-radius:10px;padding:1px 8px;font-size:13px}.iap button.own{opacity:.55}
+.shopH{font-size:16px;margin:4px 0 6px;color:#a0705a}
 #ovMove{z-index:6}.card p.mvP{font-size:15px;word-break:keep-all;margin-bottom:6px}.card p.mvS{font-size:13px;opacity:.75;margin:6px 0 12px;word-break:keep-all}
 .mvRow{display:flex;gap:8px;align-items:stretch}.mvRow input{flex:1;min-width:0;border:2px solid #e8dcc4;border-radius:14px;padding:0 12px;font-family:var(--font);font-size:15px;color:var(--ink);background:#fff}
 .mvRow .btn{width:auto;margin:0;padding:10px 14px;font-size:16px}
@@ -244,6 +255,14 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <button class="btn y" id="bMisBack" style="margin-top:4px">닫기</button>
   </div>
 </div>
+<div class="ov" id="ovAd" hidden>
+  <div class="card">
+    <h2 id="adT">광고 보고 선물 받기</h2>
+    <div class="adBox"><span class="adTag">광고 · 테스트</span><div><b>여기에 광고가 나와요</b><small>앱으로 출시하면 진짜 광고로 바뀌어요</small></div></div>
+    <div class="adBar"><i id="adBar"></i></div>
+    <button class="btn" id="bAdDone" disabled>잠깐만요…</button>
+  </div>
+</div>
 <div class="ov" id="ovMove" hidden>
   <div class="card">
     <h2>진행 옮기기</h2>
@@ -269,6 +288,9 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <div class="coinPill"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><b id="shopCoinN">0</b></div>
     <p style="margin:2px 0 10px;font-size:15px">모자를 사면 모든 친구들이 같이 써요</p>
     <div class="shop" id="shopGrid"></div>
+    <button class="btn ad" id="bAdCoin"><svg viewBox="0 0 24 24" width="22" height="22"><rect x="2.5" y="5" width="19" height="13" rx="3" fill="#fff"/><path d="M10 8.6v6l5-3z" fill="#7a5cff"/><path d="M8 21h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg><span>광고 보고 코인 +20</span></button>
+    <div class="shopH">특별 상품</div>
+    <div class="iap" id="iapGrid"></div>
     <button class="btn y" id="bShopBack">돌아가기</button>
   </div>
 </div>
@@ -279,6 +301,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <p id="winP">친구들이 모두 풀밭으로 나갔어요</p>
     <div class="coinGain" id="winCoin"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><b id="winCoinN">+0</b><small id="winCoinT"></small></div>
     <div class="winMis" id="winMis"></div>
+    <button class="btn ad" id="bAdDouble"><svg viewBox="0 0 24 24" width="22" height="22"><rect x="2.5" y="5" width="19" height="13" rx="3" fill="#fff"/><path d="M10 8.6v6l5-3z" fill="#7a5cff"/><path d="M8 21h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg><span>광고 보고 코인 2배</span></button>
     <button class="btn" id="bNext">다음 레벨</button>
     <button class="btn y" id="bAgain">다시 하기</button>
     <button class="btn share sm" id="bShareWin"><svg viewBox="0 0 24 24" width="22" height="22"><circle cx="18" cy="5.5" r="3" fill="#fff"/><circle cx="6" cy="12" r="3" fill="#fff"/><circle cx="18" cy="18.5" r="3" fill="#fff"/><path d="M8.6 10.6l6.8-3.8M8.6 13.4l6.8 3.8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg><span>친구에게 자랑하기</span><em class="shareBonus"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/></svg><b>+30</b></em></button>
@@ -289,6 +312,7 @@ body{background:var(--grass);color:var(--ink);font-family:var(--font);overflow:h
     <h2>앗, 하트가 없어요</h2>
     <p>친구들이 너무 많이 부딪혔어요.<br>순서를 잘 보고 다시 해 볼까요?</p>
     <button class="btn c" id="bCont"><svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg><span>30개로 하트 받고 이어하기</span></button>
+    <button class="btn ad" id="bAdHeart"><svg viewBox="0 0 24 24" width="22" height="22"><rect x="2.5" y="5" width="19" height="13" rx="3" fill="#fff"/><path d="M10 8.6v6l5-3z" fill="#7a5cff"/><path d="M8 21h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg><span>광고 보고 하트 받고 이어하기</span></button>
     <button class="btn" id="bRetry">다시 도전</button>
     <button class="btn y" id="bFailMenu">메뉴로</button>
   </div>
@@ -308,6 +332,7 @@ function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.im
 
 // ---------- save ----------
 const KEY='mongle-farm-v1';
+const MAX_L=300; // levels shipped (all verified solvable)
 let save={max:1,stars:{},sound:true,music:true,coins:0};
 try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s)save=Object.assign(save,s)}catch(e){}
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(save))}catch(e){}};
@@ -638,7 +663,7 @@ function updateHats(){if(!hatIM)return;let i=0;const put=(m,sp)=>{const q=HAT_AT
   for(const a of G.animals){if(a.state==='gone'||a.sleep)hatIM.setMatrixAt(i++,_hz);else put(a.m,a.sp)}
   for(const p of party.list)if(p.t>p.delay)put(p.m,p.sp);
   hatIM.count=i;hatIM.instanceMatrix.needsUpdate=true}
-function buildShop(){$('shopCoinN').textContent=save.coins||0;const own=save.owned||['none'];
+function buildShop(){$('shopCoinN').textContent=save.coins||0;try{buildIAP()}catch(e){}const own=save.owned||['none'];
   $('shopGrid').innerHTML=HATS.map(h=>{const has=own.includes(h.id),on=(save.hat||'none')===h.id;
     return `<button class="hat${on?' on':''}${!has&&(save.coins||0)<h.price?' lock':''}" data-h="${h.id}"><svg class="pic" viewBox="0 0 64 48">${h.svg}</svg><b>${h.name}</b><small>${on?'쓰는 중':has?'쓰기':'<svg class="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd34d" stroke="#e0951a" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#f3b53a" stroke-width="1.4"/><path d="M12 7.6l1.3 2.7 3 .4-2.2 2 .6 2.9-2.7-1.5-2.7 1.5.6-2.9-2.2-2 3-.4z" fill="#fff6c8"/></svg>'+h.price}</small></button>`}).join('')}
 const CAP_DEEP=CAP_M.clone();CAP_DEEP.color.set('#c69cff');
@@ -772,6 +797,18 @@ function signTexture(){const c=document.createElement('canvas');c.width=256;c.he
   try{document.fonts&&document.fonts.load('58px Jua').then(()=>{draw();t.needsUpdate=true})}catch(e){}
   return t}
 const signTex=signTexture();
+// farm billboard: an in-world ad slot. Today it shows house ads; a sponsor image can be dropped in via BILL_ADS later.
+const BILL_ADS=[{t:'모자 가게',s:'새 모자 입고!',bg:'#ffc9dc',fg:'#d6336c',ic:'hat'},{t:'친구 초대',s:'자랑하면 코인 +30',bg:'#bfe6ff',fg:'#1f6fb8',ic:'heart'},
+  {t:'광고 문의',s:'이 자리가 비어 있어요',bg:'#ffe58a',fg:'#a5620a',ic:'star'},{t:'오늘의 미션',s:'깨면 코인 듬뿍',bg:'#c8f5b8',fg:'#2e8a1e',ic:'star'}];
+let billCanvas=null,billTex=null,billI=0;
+function drawBill(i){const a=BILL_ADS[i%BILL_ADS.length],g=billCanvas.getContext('2d'),W=320,H=200;
+  g.fillStyle=a.bg;g.fillRect(0,0,W,H);g.fillStyle='rgba(255,255,255,.55)';for(let k=0;k<8;k++){g.beginPath();g.arc(20+k*44,H-10,22,0,7);g.fill()}
+  g.strokeStyle='#fff';g.lineWidth=10;g.strokeRect(5,5,W-10,H-10);
+  g.textAlign='center';g.textBaseline='middle';g.font='64px Jua, "Apple SD Gothic Neo", sans-serif';g.lineWidth=8;g.strokeStyle='#fff';g.strokeText(a.t,W/2,78);g.fillStyle=a.fg;g.fillText(a.t,W/2,78);
+  g.font='30px Jua, "Apple SD Gothic Neo", sans-serif';g.fillStyle='#4a2f25';g.fillText(a.s,W/2,142,W-40);
+  g.fillStyle=a.fg;if(a.ic==='heart')heart2(g,40,34,13);else star2(g,40,34,16);star2(g,W-40,34,12);if(billTex)billTex.needsUpdate=true}
+function billboardTex(){if(!billCanvas){billCanvas=document.createElement('canvas');billCanvas.width=320;billCanvas.height=200;billTex=new THREE.CanvasTexture(billCanvas);billTex.encoding=THREE.sRGBEncoding;billTex.anisotropy=4;
+  try{document.fonts&&document.fonts.load('64px Jua').then(()=>drawBill(billI))}catch(e){}}drawBill(billI++);return billTex}
 
 function buildEnv(cols,rows,seed,mask){mask=mask||[];const isVoid=(x,y)=>!!(mask[y]&&mask[y][x]);
   if(envGroup){scene.remove(envGroup);envGroup.traverse(o=>{if(o.isInstancedMesh)o.dispose()})}
@@ -899,6 +936,13 @@ function buildEnv(cols,rows,seed,mask){mask=mask||[];const isVoid=(x,y)=>!!(mask
   const sign=new THREE.Group();sign.position.set(-1.65,0,1.25);sign.rotation.y=.35;H.add(sign);
   for(const x of[-.42,.42]){const pst=new THREE.Mesh(CYL,woodD);pst.scale.set(.05,.8,.05);pst.position.set(x,.4,0);pst.castShadow=true;sign.add(pst)}
   const bd=new THREE.Mesh(new THREE.BoxGeometry(1.05,.5,.06),[wood,wood,wood,wood,new THREE.MeshStandardMaterial({map:signTex,roughness:.7}),wood]);bd.position.y=.72;bd.castShadow=true;sign.add(bd);
+  // rooftop ad sign: a little framed board perched on the front of the mushroom cap
+  {const bb=new THREE.Group();bb.position.set(0,1.92,1.5);bb.rotation.x=-.5;H.add(bb);
+   for(const x of[-.45,.45]){const pst=new THREE.Mesh(CYL,woodD);pst.scale.set(.045,.5,.045);pst.position.set(x,-.25,-.12);bb.add(pst)}
+   const bt=billboardTex(),pm=new THREE.MeshStandardMaterial({map:bt,emissiveMap:bt,emissive:'#ffffff',emissiveIntensity:.1,roughness:.75});
+   const pn=new THREE.Mesh(new THREE.BoxGeometry(1.36,.85,.06),[wood,wood,wood,wood,pm,wood]);pn.castShadow=true;bb.add(pn);
+   const fr=M('#fff6e8');for(const[x,y,w,h]of[[0,.45,1.46,.07],[0,-.45,1.46,.07],[-.71,0,.07,.95],[.71,0,.07,.95]]){const q=new THREE.Mesh(new THREE.BoxGeometry(w,h,.09),fr);q.position.set(x,y,.01);bb.add(q)}
+   for(let i=0;i<5;i++)S(bb,M(['#ff6f91','#fff07a','#ffffff','#b79bff','#7fdcc0'][i]),.045,-.56+i*.28,.5,.05,1,1,1,false,GS_LO)}
   // hay bales and a mailbox by the house
   const hb=buildObstacle('hay');hb.root.position.set(1.75,0,.9);hb.root.rotation.y=-.5;hb.root.scale.setScalar(.85);H.add(hb.root);
   const mb=new THREE.Group();mb.position.set(1.35,0,1.55);H.add(mb);const mp=new THREE.Mesh(CYL,woodD);mp.scale.set(.04,.55,.04);mp.position.y=.27;mb.add(mp);
@@ -1287,15 +1331,15 @@ function show(id){try{shareLabel()}catch(e){}if(id==='ovShop'){['ovTitle','ovLev
 function countUp(el,n){const t0=performance.now();const f=()=>{const k=Math.min(1,(performance.now()-t0)/700);el.textContent='+'+Math.round(n*k);if(k<1)requestAnimationFrame(f);else{SFX.coin&&SFX.coin()}};f();let i=0;const iv=setInterval(()=>{if(++i>6)clearInterval(iv);else SFX.tick&&SFX.tick(i)},100)}
 function win(){
   const st=Math.max(1,3-G.mist),L=G.L;
-  save.stars[L]=Math.max(save.stars[L]||0,st);save.max=Math.max(save.max,L+1);persist();
+  save.stars[L]=Math.max(save.stars[L]||0,st);save.max=Math.min(MAX_L,Math.max(save.max,L+1));if(L>=MAX_L)save.allDone=1;persist();
   mis('clear');if(st===3)mis('star3');if(G.tier==='hard'||G.tier==='super')mis('hard');
   startParty();bgmDuck(.12,4.5);setTimeout(()=>SFX.stars(st),2000);
   // coins: base + stars + tier bonus, first clear pays double
-  const first=!G.cleared0,gain=(5+st*5+({hard:10,super:20}[G.tier]||0))*(first?2:1);save.coins=(save.coins||0)+gain;persist();
+  const first=!G.cleared0,gain=(5+st*5+({hard:10,super:20}[G.tier]||0))*(first?2:1);save.coins=(save.coins||0)+gain;persist();G.gain=gain;G.doubled=false;$('bAdDouble').disabled=false;$('bAdDouble').querySelector('span').textContent=`광고 보고 코인 2배 (+${gain})`;
   $('winCoinN').textContent='+0';$('winCoinT').textContent=first?'첫 클리어 2배!':'';setTimeout(()=>countUp($('winCoinN'),gain),2300);
   setTimeout(()=>{SFX.win();buzz([30,40,60]);for(let i=0;i<100;i++)parts.push({x:innerWidth/2+(Math.random()-.5)*innerWidth*.3,y:innerHeight*.35,vx:(Math.random()-.5)*750,vy:-Math.random()*650-100,life:1.8+Math.random(),max:2.8,s:Math.random()*6,c:['#ff8fab','#ffd34d','#7fdcc0','#9ac8ff','#fff'][i%5],t:'conf'})},1100);
   const msgs=['완벽해요! 한 번도 안 부딪혔어요','잘했어요! 거의 완벽해요','성공! 다음엔 별 3개 도전'];
-  $('winT').textContent=`레벨 ${L} 탈출 성공!`;$('winP').textContent=msgs[3-st];
+  $('winT').textContent=`레벨 ${L} 탈출 성공!`;$('winP').textContent=L>=MAX_L?`${MAX_L}판을 모두 깼어요! 새 목장이 곧 열려요`:msgs[3-st];$('bNext').hidden=L>=MAX_L;
   const starSvg=on=>`<svg viewBox="0 0 24 24" class="${on?'on':''}"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.2 1.3-6.6-4.9-4.6 6.6-.8z" fill="${on?'#ffd34d':'#e9dcc6'}" stroke="${on?'#e0951a':'#cbb99c'}" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
   $('winStars').innerHTML=[0,1,2].map(i=>starSvg(i<st)).join('');
   [...$('winStars').children].forEach((s,i)=>s.style.animationDelay=(.25+i*.18)+'s');
@@ -1336,7 +1380,7 @@ const easeInOut=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2,easeOut=t=>1-Math.pow(1-t,3
 const MAP_ME='<svg viewBox="0 0 48 48" width="46" height="46"><ellipse cx="17" cy="9" rx="5" ry="10" fill="#fff" stroke="#f0c8d6" stroke-width="1.5" transform="rotate(-12 17 9)"/><ellipse cx="31" cy="9" rx="5" ry="10" fill="#fff" stroke="#f0c8d6" stroke-width="1.5" transform="rotate(12 31 9)"/><ellipse cx="17" cy="10" rx="2.2" ry="6" fill="#ffb3ca" transform="rotate(-12 17 10)"/><ellipse cx="31" cy="10" rx="2.2" ry="6" fill="#ffb3ca" transform="rotate(12 31 10)"/><circle cx="24" cy="29" r="15" fill="#fff" stroke="#f0c8d6" stroke-width="1.5"/><ellipse cx="18.5" cy="28" rx="2.3" ry="2.9" fill="#2a1d1a"/><ellipse cx="29.5" cy="28" rx="2.3" ry="2.9" fill="#2a1d1a"/><circle cx="19.2" cy="27" r=".9" fill="#fff"/><circle cx="30.2" cy="27" r=".9" fill="#fff"/><ellipse cx="14.5" cy="33" rx="3" ry="1.8" fill="#ffb3ca"/><ellipse cx="33.5" cy="33" rx="3" ry="1.8" fill="#ffb3ca"/><path d="M22 33q2 2 4 0" fill="none" stroke="#2a1d1a" stroke-width="1.4" stroke-linecap="round"/></svg>';
 function buildLevels(){
   // a winding path from the bottom (level 1) up the hill, chapter signs every 10 levels
-  const n=Math.max(20,Math.ceil((save.max+6)/10)*10),gap=96,top=90,H=top+n*gap+40,W=$('lvgrid').clientWidth||300;
+  const n=Math.min(MAX_L,Math.max(20,Math.ceil((save.max+6)/10)*10)),gap=96,top=90,H=top+n*gap+40,W=$('lvgrid').clientWidth||300;
   const X=i=>W/2+Math.sin(i*.95)*W*.27,Y=i=>H-40-(i-.5)*gap;
   let d=`M${X(1)} ${Y(1)+60}`;for(let i=1;i<=n;i++){const x0=X(i-1),y0=Y(i-1),x1=X(i),y1=Y(i);d+=i===1?` L${x1} ${y1}`:` C${x0} ${y0-gap*.5} ${x1} ${y1+gap*.5} ${x1} ${y1}`}
   const doneD=(()=>{const m=Math.min(save.max,n);let q=`M${X(1)} ${Y(1)+60} L${X(1)} ${Y(1)}`;for(let i=2;i<=m;i++)q+=` C${X(i-1)} ${Y(i-1)-gap*.5} ${X(i)} ${Y(i)+gap*.5} ${X(i)} ${Y(i)}`;return q})();
@@ -1366,7 +1410,7 @@ const sndLabel=()=>$('bSound').textContent=save.sound?'소리 켜짐':'소리 �
 $('bSound').onclick=()=>{save.sound=!save.sound;persist();sndLabel();if(!save.sound)bgmStop();audio();SFX.ui()};
 const musLabel=()=>$('bMusic').textContent=save.music?'음악 켜짐':'음악 꺼짐';musLabel();
 $('bMusic').onclick=()=>{save.music=!save.music;persist();musLabel();if(!save.music)bgmStop();audio();SFX.ui()};
-$('bNext').onclick=()=>{SFX.ui();show(null);startLevel(G.L+1)};
+$('bNext').onclick=()=>{SFX.ui();const L=Math.min(MAX_L,G.L+1);ADS.inter(()=>{show(null);startLevel(L)})};
 $('bAgain').onclick=()=>{SFX.ui();show(null);startLevel(G.L)};
 $('bShop').onclick=()=>{audio();SFX.ui();buildShop();show('ovShop')};
 // daily check-in gift: 7-day streak, bigger reward each day, resets if a day is missed
@@ -1466,6 +1510,45 @@ function onGone(a){if(!a.gold)return;a.gold=false;const n=5;save.coins=(save.coi
   const[ex,ey]=toScreen(new THREE.Vector3(0,1.6,G.track?G.track.door:0));floats.push({x:clamp(ex,90,innerWidth-90),y:ey-10,txt:'황금 코인 +'+n,life:1.2,max:1.2});SFX.coin&&SFX.coin();
   for(let i=0;i<10;i++){const an=i/10*Math.PI*2;parts.push({x:ex,y:ey,vx:Math.cos(an)*150,vy:Math.sin(an)*150-40,life:.6,max:.6,s:6,c:'#ffd34d',t:'star'})}}
 misToday();misBadge();balLabel();
+// ---------- ads & purchases ----------
+// Web build: friendly test ads, purchases disabled. Native app (Capacitor): AdMob + store billing plugins take over.
+const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+const IOS_APP=NATIVE&&Capacitor.getPlatform&&Capacitor.getPlatform()==='ios';
+// Google sample ad units (safe for testing). Replace with your own AdMob unit ids before release.
+const AD_IDS=IOS_APP?{reward:'ca-app-pub-3940256099942544/1712485313',inter:'ca-app-pub-3940256099942544/4411468910'}:{reward:'ca-app-pub-3940256099942544/5224354917',inter:'ca-app-pub-3940256099942544/1033173712'};
+const ADMOB=()=>NATIVE&&Capacitor.Plugins&&Capacitor.Plugins.AdMob;
+if(ADMOB())try{ADMOB().initialize({initializeForTesting:true})}catch(e){}
+let adCb=null,adTimer=0;
+function testAd(title,sec,reward,cb){$('adT').textContent=title;const b=$('bAdDone');b.disabled=true;b.textContent=`${sec}초…`;$('adBar').style.width='0';$('ovAd').hidden=false;bgmDuck(.05,sec+1);
+  const t0=performance.now();clearInterval(adTimer);adTimer=setInterval(()=>{const k=Math.min(1,(performance.now()-t0)/(sec*1000));$('adBar').style.width=(k*100)+'%';
+    if(k<1){b.textContent=`${Math.ceil(sec*(1-k))}초…`;return}clearInterval(adTimer);b.disabled=false;b.textContent=reward?'선물 받기':'닫기'},100);adCb=cb}
+$('bAdDone').onclick=()=>{SFX.ui();$('ovAd').hidden=true;bgmDuck(.5,.1);const f=adCb;adCb=null;f&&f()};
+const ADS={
+  rewarded(title,cb){audio();const A=ADMOB();
+    if(A){A.prepareRewardVideoAd({adId:AD_IDS.reward,isTesting:true}).then(()=>A.showRewardVideoAd()).then(()=>cb()).catch(()=>toast('광고를 불러오지 못했어요. 잠시 뒤에 다시 해 주세요'));return}
+    testAd(title,5,true,cb)},
+  // between levels, never in the first 20 levels, at most every 3 clears, never after buying "no ads"
+  inter(cb){save.adCnt=(save.adCnt||0)+1;persist();
+    if(save.noAds||!G||G.L<20||save.adCnt<3)return cb();save.adCnt=0;persist();const A=ADMOB();
+    if(A){A.prepareInterstitial({adId:AD_IDS.inter,isTesting:true}).then(()=>A.showInterstitial()).catch(()=>{}).finally(cb);return}
+    testAd('잠깐 광고',3,false,cb)}};
+// rewarded: one more heart
+$('bAdHeart').onclick=()=>{if(!G)return;ADS.rewarded('광고 보고 하트 받기',()=>{SFX.coin();show(null);G.hearts=1;G.done=false;renderHUD();
+  const hs=$('hearts').children[0];if(hs)hs.animate([{transform:'scale(.2)'},{transform:'scale(1.5)'},{transform:'scale(1)'}],{duration:500,easing:'ease-out'});bgmDuck(.5,.1)})};
+// rewarded: double the coins of this clear
+$('bAdDouble').onclick=()=>{if(!G||!G.gain||G.doubled)return;ADS.rewarded('광고 보고 코인 2배',()=>{G.doubled=true;save.coins=(save.coins||0)+G.gain;persist();$('bAdDouble').disabled=true;
+  $('winCoinT').textContent='2배 보너스!';countUp($('winCoinN'),G.gain*2);$('titleCoinN').textContent=save.coins})};
+// rewarded: free coins in the shop, 5 a day
+const adCoinLeft=()=>{const d=dayKey();if(!save.adDay||save.adDay.d!==d)save.adDay={d,n:0};return 5-save.adDay.n};
+function adCoinLabel(){const n=adCoinLeft();$('bAdCoin').disabled=n<=0;$('bAdCoin').querySelector('span').textContent=n>0?`광고 보고 코인 +20 (오늘 ${n}번)`:'오늘 광고 선물은 다 받았어요'}
+$('bAdCoin').onclick=()=>{if(adCoinLeft()<=0)return;ADS.rewarded('광고 보고 코인 받기',()=>{save.adDay.n++;save.coins=(save.coins||0)+20;persist();SFX.coin();toast('코인 20개를 받았어요');buildShop();$('titleCoinN').textContent=save.coins})};
+// in-app purchases (store billing hooks up in the app build)
+const IAP=[{id:'noads',name:'광고 제거',sub:'판 사이 광고 없음',price:'₩3,300',pic:'🚫'},{id:'coins600',name:'코인 600',sub:'+ 풍선 2개',price:'₩1,200',pic:'🪙'},{id:'coins2000',name:'코인 2000',sub:'+ 풍선 8개',price:'₩3,300',pic:'💰'}];
+function buildIAP(){$('iapGrid').innerHTML=IAP.map(p=>`<button data-p="${p.id}" class="${p.id==='noads'&&save.noAds?'own':''}"><span style="font-size:26px">${p.pic}</span><b>${p.name}</b><small style="font-size:11px;opacity:.7">${p.sub}</small><em>${p.id==='noads'&&save.noAds?'구매함':p.price}</em></button>`).join('');adCoinLabel()}
+function grantIAP(id){if(id==='noads')save.noAds=1;if(id==='coins600'){save.coins=(save.coins||0)+600;save.balloons=(save.balloons??3)+2}if(id==='coins2000'){save.coins=(save.coins||0)+2000;save.balloons=(save.balloons??3)+8}persist();SFX.win&&SFX.win();buildShop();$('titleCoinN').textContent=save.coins}
+$('iapGrid').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;audio();const id=b.dataset.p;if(id==='noads'&&save.noAds)return;
+  const S=window.CdvPurchase&&CdvPurchase.store;if(NATIVE&&S){const o=S.get(id);if(o&&o.getOffer())o.getOffer().order();else toast('스토어에 연결하지 못했어요');return}
+  SFX.boing();toast('구매는 앱스토어 출시 후 열려요 (지금은 테스트 버전)')});
 // ---------- progress transfer UI ----------
 if(IN_KAKAO)$('kakaoNote').hidden=false;
 $('bKakaoOut').onclick=()=>{audio();SFX.ui();openOutside()};
